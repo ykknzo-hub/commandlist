@@ -10,7 +10,7 @@ local StarterGui = game:GetService("StarterGui")
 local lp = Players.LocalPlayer
 local pg = lp:WaitForChild("PlayerGui")
 
-local existing = pg:FindFirstChild("TemplateGui")
+local existing = pg:FindFirstChild("TripGui")
 if existing then existing:Destroy() end
 
 -------------------------------------------------
@@ -98,7 +98,7 @@ end
 -- Main Window Construction
 -------------------------------------------------
 local gui = Instance.new("ScreenGui")
-gui.Name = "TemplateGui"
+gui.Name = "TripGui"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 100
