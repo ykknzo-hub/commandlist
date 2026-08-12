@@ -1,0 +1,1218 @@
+pcall(function()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local UIS = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+
+if not LocalPlayer.Character or LocalPlayer.Character:WaitForChild("Humanoid").RigType ~= Enum.HumanoidRigType.R15 then
+	game.StarterGui:SetCore("SendNotification", {
+		Title = "R6", Text = "You're on R6 — switch to R15!", Duration = 10
+	})
+	return
+end
+
+cloneref = cloneref or function(o) return o end
+local CoreGui = cloneref(game:GetService("CoreGui"))
+
+if CoreGui:FindFirstChild("GazeAnimGui") then CoreGui.GazeAnimGui:Destroy() end
+
+-------------------------------------------------
+-- Original Animation Database
+-------------------------------------------------
+local OriginalAnimations = {
+	["Idle"] = {
+		["2016 Animation (mm2)"] = {"387947158", "387947464"},
+		["(UGC) Oh Really?"] = {"98004748982532", "98004748982532"},
+		["Astronaut"] = {"891621366", "891633237"},
+		["Adidas Community"] = {"122257458498464", "102357151005774"},
+		["Bold"] = {"16738333868", "16738334710"},
+		["(UGC) Slasher"] = {"140051337061095", "140051337061095"},
+		["(UGC) Retro"] = {"80479383912838", "80479383912838"},
+		["(UGC) Magician"] = {"139433213852503", "139433213852503"},
+		["(UGC) John Doe"] = {"72526127498800", "72526127498800"},
+		["(UGC) Noli"] = {"139360856809483", "139360856809483"},
+		["(UGC) Coolkid"] = {"95203125292023", "95203125292023"},
+		["(UGC) Survivor Injured"] = {"73905365652295", "73905365652295"},
+		["(UGC) Retro Zombie"] = {"90806086002292", "90806086002292"},
+		["(UGC) 1x1x1x1"] = {"76780522821306", "76780522821306"},
+		["Borock"] = {"3293641938", "3293642554"},
+		["Bubbly"] = {"910004836", "910009958"},
+		["Cartoony"] = {"742637544", "742638445"},
+		["Confident"] = {"1069977950", "1069987858"},
+		["Catwalk Glam"] = {"133806214992291", "94970088341563"},
+		["Cowboy"] = {"1014390418", "1014398616"},
+		["Drooling Zombie"] = {"3489171152", "3489171152"},
+		["Elder"] = {"10921101664", "10921102574"},
+		["Ghost"] = {"616006778", "616008087"},
+		["Knight"] = {"657595757", "657568135"},
+		["Levitation"] = {"616006778", "616008087"},
+		["Mage"] = {"707742142", "707855907"},
+		["MrToilet"] = {"4417977954", "4417978624"},
+		["Ninja"] = {"656117400", "656118341"},
+		["NFL"] = {"92080889861410", "74451233229259"},
+		["OldSchool"] = {"10921230744", "10921232093"},
+		["Patrol"] = {"1149612882", "1150842221"},
+		["Pirate"] = {"750781874", "750782770"},
+		["Default Retarget"] = {"95884606664820", "95884606664820"},
+		["Very Long"] = {"18307781743", "18307781743"},
+		["Popstar"] = {"1212900985", "1150842221"},
+		["Princess"] = {"941003647", "941013098"},
+		["R6"] = {"12521158637", "12521162526"},
+		["R15 Reanimated"] = {"4211217646", "4211218409"},
+		["Realistic"] = {"17172918855", "17173014241"},
+		["Robot"] = {"616088211", "616089559"},
+		["Sneaky"] = {"1132473842", "1132477671"},
+		["Sports (Adidas)"] = {"18537376492", "18537371272"},
+		["Soldier"] = {"3972151362", "3972151362"},
+		["Stylish"] = {"616136790", "616138447"},
+		["Stylized Female"] = {"4708191566", "4708192150"},
+		["Superhero"] = {"10921288909", "10921290167"},
+		["Toy"] = {"782841498", "782845736"},
+		["Udzal"] = {"3303162274", "3303162549"},
+		["Vampire"] = {"1083445855", "1083450166"},
+		["Werewolf"] = {"1083195517", "1083214717"},
+		["Wicked (Popular)"] = {"118832222982049", "76049494037641"},
+		["No Boundaries (Walmart)"] = {"18747067405", "18747063918"},
+		["Zombie"] = {"616158929", "616160636"},
+		["(UGC) Zombie"] = {"77672872857991", "77672872857991"},
+		["(UGC) TailWag"] = {"129026910898635", "129026910898635"},
+		["[VOTE] warming up"] = {"83573330053643", "83573330053643"},
+		["cesus"] = {"115879733952840", "115879733952840"},
+		["[VOTE] Float"] = {"110375749767299", "110375749767299"},
+		["Sway"] = {"560832030", "560833564"},
+		["UGC Oneleft"] = {"121217497452435", "121217497452435"},
+		["AuraFarming"] = {"138665010911335", "138665010911335"},
+		["[VOTE] Mech Float"] = {"74447366032908", "74447366032908"},
+		["Badware"] = {"140131631438778", "140131631438778"},
+		["Wicked \"Dancing Through Life\""] = {"92849173543269", "132238900951109"},
+		["Unboxed By Amazon"] = {"98281136301627", "138183121662404"},
+	},
+	["Walk"] = {
+		["Geto"] = "85811471336028",
+		["Patrol"] = "1151231493",
+		["Drooling Zombie"] = "3489174223",
+		["Adidas Community"] = "122150855457006",
+		["Levitation"] = "616013216",
+		["Catwalk Glam"] = "109168724482748",
+		["Knight"] = "10921127095",
+		["Pirate"] = "750785693",
+		["Bold"] = "16738340646",
+		["Sports (Adidas)"] = "18537392113",
+		["Zombie"] = "616168032",
+		["Astronaut"] = "891667138",
+		["Cartoony"] = "742640026",
+		["Ninja"] = "656121766",
+		["Confident"] = "1070017263",
+		["Wicked \"Dancing Through Life\""] = "73718308412641",
+		["Unboxed By Amazon"] = "90478085024465",
+		["Gojo"] = "95643163365384",
+		["R15 Reanimated"] = "4211223236",
+		["Ghost"] = "616013216",
+		["2016 Animation (mm2)"] = "387947975",
+		["(UGC) Zombie"] = "113603435314095",
+		["No Boundaries (Walmart)"] = "18747074203",
+		["Rthro"] = "10921269718",
+		["Werewolf"] = "1083178339",
+		["Wicked (Popular)"] = "92072849924640",
+		["Vampire"] = "1083473930",
+		["Popstar"] = "1212980338",
+		["Mage"] = "707897309",
+		["(UGC) Smooth"] = "76630051272791",
+		["R6"] = "12518152696",
+		["NFL"] = "110358958299415",
+		["Bubbly"] = "910034870",
+		["(UGC) Retro"] = "107806791584829",
+		["(UGC) Retro Zombie"] = "140703855480494",
+		["OldSchool"] = "10921244891",
+		["Elder"] = "10921111375",
+		["Stylish"] = "616146177",
+		["Stylized Female"] = "4708193840",
+		["Robot"] = "616095330",
+		["Sneaky"] = "1132510133",
+		["Superhero"] = "10921298616",
+		["Udzal"] = "3303162967",
+		["Toy"] = "782843345",
+		["Default Retarget"] = "115825677624788",
+		["Princess"] = "941028902",
+		["Cowboy"] = "1014421541",
+	},
+	["Run"] = {
+		["Robot"] = "10921250460",
+		["Patrol"] = "1150967949",
+		["Drooling Zombie"] = "3489173414",
+		["Adidas Community"] = "82598234841035",
+		["Heavy Run (Udzal/Borock)"] = "3236836670",
+		["Catwalk Glam"] = "81024476153754",
+		["Knight"] = "10921121197",
+		["Pirate"] = "750783738",
+		["Bold"] = "16738337225",
+		["Sports (Adidas)"] = "18537384940",
+		["Zombie"] = "616163682",
+		["Astronaut"] = "10921039308",
+		["Cartoony"] = "10921076136",
+		["Ninja"] = "656118852",
+		["(UGC) Dog"] = "130072963359721",
+		["Wicked \"Dancing Through Life\""] = "135515454877967",
+		["Unboxed By Amazon"] = "134824450619865",
+		["[UGC] Flipping"] = "124427738251511",
+		["Sneaky"] = "1132494274",
+		["R6"] = "12518152696",
+		["[VOTE] Aura"] = "120142877225965",
+		["Popstar"] = "1212980348",
+		["Wicked (Popular)"] = "72301599441680",
+		["[UGC] chibi"] = "85887415033585",
+		["R15 Reanimated"] = "4211220381",
+		["Mage"] = "10921148209",
+		["Ghost"] = "616013216",
+		["Rthro"] = "10921261968",
+		["Confident"] = "1070001516",
+		["Stylized Female"] = "4708192705",
+		["No Boundaries (Walmart)"] = "18747070484",
+		["Elder"] = "10921104374",
+		["Werewolf"] = "10921336997",
+		["[UGC] Girly"] = "128578785610052",
+		["Stylish"] = "10921276116",
+		["(UGC) Pride"] = "116462200642360",
+		["NFL"] = "117333533048078",
+		["(UGC) Soccer"] = "116881956670910",
+		["MrToilet"] = "4417979645",
+		["[VOTE] Float"] = "71267457613791",
+		["Levitation"] = "616010382",
+		["(UGC) Retro"] = "107806791584829",
+		["(UGC) Retro Zombie"] = "140703855480494",
+		["OldSchool"] = "10921240218",
+		["Vampire"] = "10921320299",
+		["furry"] = "102269417125238",
+		["Bubbly"] = "10921057244",
+		["fake wicked"] = "138992096476836",
+		["2016 Animation (mm2)"] = "387947975",
+		["[UGC] ball"] = "132499588684957",
+		["Superhero"] = "10921291831",
+		["Toy"] = "10921306285",
+		["Default Retarget"] = "102294264237491",
+		["Princess"] = "941015281",
+		["Cowboy"] = "1014401683",
+	},
+	["Jump"] = {
+		["Robot"] = "616090535",
+		["Patrol"] = "1148811837",
+		["Adidas Community"] = "75290611992385",
+		["Levitation"] = "616008936",
+		["Catwalk Glam"] = "116936326516985",
+		["Knight"] = "910016857",
+		["Pirate"] = "750782230",
+		["Bold"] = "16738336650",
+		["Sports (Adidas)"] = "18537380791",
+		["Zombie"] = "616161997",
+		["Astronaut"] = "891627522",
+		["Cartoony"] = "742637942",
+		["Ninja"] = "656117878",
+		["Confident"] = "1069984524",
+		["Wicked \"Dancing Through Life\""] = "78508480717326",
+		["Unboxed By Amazon"] = "121454505477205",
+		["R6"] = "12520880485",
+		["R15 Reanimated"] = "4211219390",
+		["Ghost"] = "616008936",
+		["Rthro"] = "10921263860",
+		["No Boundaries (Walmart)"] = "18747069148",
+		["Werewolf"] = "1083218792",
+		["Cowboy"] = "1014394726",
+		["UGC"] = "91788124131212",
+		["[VOTE] Animal"] = "131203832825082",
+		["Popstar"] = "1212954642",
+		["Mage"] = "10921149743",
+		["Sneaky"] = "1132489853",
+		["Superhero"] = "10921294559",
+		["Elder"] = "10921107367",
+		["(UGC) Retro"] = "139390570947836",
+		["NFL"] = "119846112151352",
+		["OldSchool"] = "10921242013",
+		["Stylized Female"] = "4708188025",
+		["Stylish"] = "616139451",
+		["Bubbly"] = "910016857",
+		["[VOTE] Float"] = "75611679208549",
+		["[VOTE] Aura"] = "93382302369459",
+		["Vampire"] = "1083455352",
+		["Wicked (Popular)"] = "104325245285198",
+		["Toy"] = "10921308158",
+		["Default Retarget"] = "117150377950987",
+		["Princess"] = "941008832",
+		["[UGC] happy"] = "72388373557525",
+	},
+	["Fall"] = {
+		["Robot"] = "616087089",
+		["Patrol"] = "1148863382",
+		["Adidas Community"] = "98600215928904",
+		["Levitation"] = "616005863",
+		["Catwalk Glam"] = "92294537340807",
+		["Knight"] = "10921122579",
+		["Pirate"] = "750780242",
+		["Bold"] = "16738333171",
+		["Sports (Adidas)"] = "18537367238",
+		["Zombie"] = "616157476",
+		["Astronaut"] = "891617961",
+		["Cartoony"] = "742637151",
+		["Ninja"] = "656115606",
+		["Confident"] = "1069973677",
+		["Wicked \"Dancing Through Life\""] = "78147885297412",
+		["Unboxed By Amazon"] = "94788218468396",
+		["R6"] = "12520972571",
+		["[UGC] skydiving"] = "102674302534126",
+		["R15 Reanimated"] = "4211216152",
+		["Rthro"] = "10921262864",
+		["No Boundaries (Walmart)"] = "18747062535",
+		["Werewolf"] = "1083189019",
+		["[VOTE] TPose"] = "139027266704971",
+		["Mage"] = "707829716",
+		["[VOTE] Animal"] = "77069224396280",
+		["Wicked (Popular)"] = "121152442762481",
+		["Popstar"] = "1212900995",
+		["NFL"] = "129773241321032",
+		["OldSchool"] = "10921241244",
+		["Sneaky"] = "1132469004",
+		["Elder"] = "10921105765",
+		["Bubbly"] = "910001910",
+		["Stylish"] = "616134815",
+		["Stylized Female"] = "4708186162",
+		["Vampire"] = "1083443587",
+		["Superhero"] = "10921293373",
+		["Toy"] = "782846423",
+		["Default Retarget"] = "110205622518029",
+		["Princess"] = "941000007",
+		["Cowboy"] = "1014384571",
+	},
+	["Swim"] = {
+		["Sneaky"] = "1132500520",
+		["Patrol"] = "1151204998",
+		["Adidas Community"] = "133308483266208",
+		["Levitation"] = "10921138209",
+		["Catwalk Glam"] = "134591743181628",
+		["Knight"] = "10921125160",
+		["Pirate"] = "750784579",
+		["Bold"] = "16738339158",
+		["Sports (Adidas)"] = "18537389531",
+		["Zombie"] = "616165109",
+		["Astronaut"] = "891663592",
+		["Cartoony"] = "10921079380",
+		["Wicked (Popular)"] = "99384245425157",
+		["Mage"] = "707876443",
+		["PopStar"] = "1212998578",
+		["Unboxed By Amazon"] = "105962919001086",
+		["R6"] = "12518152696",
+		["[VOTE] Boat"] = "85689117221382",
+		["Rthro"] = "10921264784",
+		["CowBoy"] = "1014406523",
+		["No Boundaries (Walmart)"] = "18747073181",
+		["Werewolf"] = "10921340419",
+		["NFL"] = "132697394189921",
+		["OldSchool"] = "10921243048",
+		["Wicked \"Dancing Through Life\""] = "110657013921774",
+		["Elder"] = "10921108971",
+		["Bubbly"] = "910028158",
+		["Robot"] = "10921253142",
+		["[VOTE] Aura"] = "80645586378736",
+		["Vampire"] = "10921324408",
+		["Stylish"] = "10921281000",
+		["Toy"] = "10921309319",
+		["SuperHero"] = "10921295495",
+		["Princess"] = "941018893",
+		["Confident"] = "1070009914",
+	},
+	["SwimIdle"] = {
+		["Sneaky"] = "1132506407",
+		["SuperHero"] = "10921297391",
+		["Adidas Community"] = "109346520324160",
+		["Levitation"] = "10921139478",
+		["Catwalk Glam"] = "98854111361360",
+		["Knight"] = "10921125935",
+		["Pirate"] = "750785176",
+		["Bold"] = "16738339817",
+		["Sports (Adidas)"] = "18537387180",
+		["Stylized"] = "4708190607",
+		["Astronaut"] = "891663592",
+		["Cartoony"] = "10921079380",
+		["Wicked (Popular)"] = "113199415118199",
+		["Mage"] = "707894699",
+		["Wicked \"Dancing Through Life\""] = "129183123083281",
+		["Unboxed By Amazon"] = "129126268464847",
+		["R6"] = "12518152696",
+		["Rthro"] = "10921265698",
+		["CowBoy"] = "1014411816",
+		["No Boundaries (Walmart)"] = "18747071682",
+		["Werewolf"] = "10921341319",
+		["NFL"] = "79090109939093",
+		["OldSchool"] = "10921244018",
+		["Robot"] = "10921253767",
+		["Elder"] = "10921110146",
+		["Bubbly"] = "910030921",
+		["Patrol"] = "1151221899",
+		["Vampire"] = "10921325443",
+		["Popstar"] = "1212998578",
+		["Ninja"] = "656118341",
+		["Toy"] = "10921310341",
+		["Confident"] = "1070012133",
+		["Princess"] = "941025398",
+		["Stylish"] = "10921281964",
+	},
+	["Climb"] = {
+		["Robot"] = "616086039",
+		["Patrol"] = "1148811837",
+		["Adidas Community"] = "88763136693023",
+		["Levitation"] = "10921132092",
+		["Catwalk Glam"] = "119377220967554",
+		["Knight"] = "10921125160",
+		["[VOTE] Animal"] = "124810859712282",
+		["Bold"] = "16738332169",
+		["Sports (Adidas)"] = "18537363391",
+		["Zombie"] = "616156119",
+		["Astronaut"] = "10921032124",
+		["Cartoony"] = "742636889",
+		["Ninja"] = "656114359",
+		["Confident"] = "1069946257",
+		["Wicked \"Dancing Through Life\""] = "129447497744818",
+		["Unboxed By Amazon"] = "121145883950231",
+		["R6"] = "12520982150",
+		["Ghost"] = "616003713",
+		["Rthro"] = "10921257536",
+		["CowBoy"] = "1014380606",
+		["No Boundaries (Walmart)"] = "18747060903",
+		["Mage"] = "707826056",
+		["[VOTE] sticky"] = "77520617871799",
+		["Reanimated R15"] = "4211214992",
+		["Popstar"] = "1213044953",
+		["(UGC) Retro"] = "121075390792786",
+		["NFL"] = "134630013742019",
+		["OldSchool"] = "10921229866",
+		["Sneaky"] = "1132461372",
+		["Elder"] = "845392038",
+		["Stylized Female"] = "4708184253",
+		["Stylish"] = "10921271391",
+		["SuperHero"] = "10921286911",
+		["WereWolf"] = "10921329322",
+		["Vampire"] = "1083439238",
+		["Toy"] = "10921300839",
+		["Wicked (Popular)"] = "131326830509784",
+		["Princess"] = "940996062",
+		["[VOTE] Rope"] = "134977367563514",
+	},
+}
+
+local Animations
+local fileAnimations
+
+if isfile("GreyLikesToSmellUrFeet.json") then
+	local ok, data = pcall(readfile, "GreyLikesToSmellUrFeet.json")
+	if ok then
+		Animations = HttpService:JSONDecode(data)
+		fileAnimations = HttpService:JSONDecode(data)
+	else
+		Animations = OriginalAnimations
+		fileAnimations = OriginalAnimations
+	end
+else
+	writefile("GreyLikesToSmellUrFeet.json", HttpService:JSONEncode(OriginalAnimations))
+	Animations = OriginalAnimations
+	fileAnimations = OriginalAnimations
+end
+
+local lastAnimations = {}
+if isfile("MeWhenUrMom.json") then
+	pcall(function()
+		lastAnimations = HttpService:JSONDecode(readfile("MeWhenUrMom.json"))
+	end)
+end
+
+-------------------------------------------------
+-- Animation Helpers
+-------------------------------------------------
+local function freeze()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	char:WaitForChild("Humanoid").PlatformStand = true
+	task.spawn(function()
+		for _, p in ipairs(char:GetDescendants()) do
+			if p:IsA("BasePart") and not p.Anchored then p.Anchored = true end
+		end
+	end)
+end
+
+local function unfreeze()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	char:WaitForChild("Humanoid").PlatformStand = false
+	task.spawn(function()
+		for _, p in ipairs(char:GetDescendants()) do
+			if p:IsA("BasePart") and p.Anchored then p.Anchored = false end
+		end
+	end)
+end
+
+local function refresh()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	char:WaitForChild("Humanoid"):ChangeState(Enum.HumanoidStateType.Freefall)
+end
+
+local function refreshSwim()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local hum = char:WaitForChild("Humanoid")
+	hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+	task.wait(0.1)
+	hum:ChangeState(Enum.HumanoidStateType.Swimming)
+end
+
+local function refreshClimb()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local hum = char:WaitForChild("Humanoid")
+	hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+	task.wait(0.1)
+	hum:ChangeState(Enum.HumanoidStateType.Climbing)
+end
+
+local resetFns = {
+	Idle = function(Animate)
+		Animate.idle.Animation1.AnimationId = "http://www.roblox.com/asset/?id=0"
+		Animate.idle.Animation2.AnimationId = "http://www.roblox.com/asset/?id=0"
+	end,
+	Walk = function(Animate)
+		Animate.walk.WalkAnim.AnimationId = "http://www.roblox.com/asset/?id=0"
+	end,
+	Run = function(Animate)
+		Animate.run.RunAnim.AnimationId = "http://www.roblox.com/asset/?id=0"
+	end,
+	Jump = function(Animate)
+		Animate.jump.JumpAnim.AnimationId = "http://www.roblox.com/asset/?id=0"
+	end,
+	Fall = function(Animate)
+		Animate.fall.FallAnim.AnimationId = "http://www.roblox.com/asset/?id=0"
+	end,
+	Swim = function(Animate)
+		if Animate:FindFirstChild("swim") then
+			Animate.swim.Swim.AnimationId = "http://www.roblox.com/asset/?id=0"
+		end
+	end,
+	SwimIdle = function(Animate)
+		if Animate:FindFirstChild("swimidle") then
+			Animate.swimidle.SwimIdle.AnimationId = "http://www.roblox.com/asset/?id=0"
+		end
+	end,
+	Climb = function(Animate)
+		Animate.climb.ClimbAnim.AnimationId = "http://www.roblox.com/asset/?id=0"
+	end,
+}
+
+local applyFns = {
+	Idle = function(Animate, id)
+		Animate.idle.Animation1.AnimationId = "http://www.roblox.com/asset/?id=" .. id[1]
+		Animate.idle.Animation2.AnimationId = "http://www.roblox.com/asset/?id=" .. id[2]
+		refresh()
+	end,
+	Walk = function(Animate, id)
+		Animate.walk.WalkAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. id
+		refresh()
+	end,
+	Run = function(Animate, id)
+		Animate.run.RunAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. id
+		refresh()
+	end,
+	Jump = function(Animate, id)
+		Animate.jump.JumpAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. id
+		refresh()
+	end,
+	Fall = function(Animate, id)
+		Animate.fall.FallAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. id
+		refresh()
+	end,
+	Swim = function(Animate, id)
+		if Animate:FindFirstChild("swim") then
+			Animate.swim.Swim.AnimationId = "http://www.roblox.com/asset/?id=" .. id
+			refreshSwim()
+		end
+	end,
+	SwimIdle = function(Animate, id)
+		if Animate:FindFirstChild("swimidle") then
+			Animate.swimidle.SwimIdle.AnimationId = "http://www.roblox.com/asset/?id=" .. id
+			refreshSwim()
+		end
+	end,
+	Climb = function(Animate, id)
+		Animate.climb.ClimbAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. id
+		refreshClimb()
+	end,
+}
+
+function setAnimation(animType, animId)
+	if type(animId) ~= "table" and type(animId) ~= "string" then return end
+	local char = LocalPlayer.Character
+	if not char then return end
+	local Animate = char:FindFirstChild("Animate")
+	if not Animate then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+
+	freeze()
+	task.wait(0.1)
+	for _, track in ipairs(hum:GetPlayingAnimationTracks()) do track:Stop(0) end
+
+	local ok, err = pcall(function()
+		pcall(resetFns[animType], Animate)
+		lastAnimations[animType] = animId
+		applyFns[animType](Animate, animId)
+	end)
+	if not ok then warn("setAnimation error:", err) end
+
+	pcall(function() writefile("MeWhenUrMom.json", HttpService:JSONEncode(lastAnimations)) end)
+	task.wait(0.1)
+	unfreeze()
+end
+
+-- Reset character + keep exact position
+local function fullReset()
+	local char = LocalPlayer.Character
+	if not char then return end
+
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	local savedCFrame = hrp and hrp.CFrame or CFrame.new()
+
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.Health = 0
+	end
+
+	local conn
+	conn = LocalPlayer.CharacterAdded:Connect(function(newChar)
+		conn:Disconnect()
+		task.wait(0.15)
+		local newHrp = newChar:WaitForChild("HumanoidRootPart", 3)
+		if newHrp then
+			newChar:PivotTo(savedCFrame)
+		end
+	end)
+end
+
+local function loadLastAnimations()
+	if isfile("MeWhenUrMom.json") then
+		local ok, data = pcall(readfile, "MeWhenUrMom.json")
+		if ok then
+			local saved = HttpService:JSONDecode(data)
+			for _, t in ipairs({"Idle","Walk","Run","Jump","Fall","Swim","SwimIdle","Climb"}) do
+				if saved[t] then setAnimation(t, saved[t]) end
+			end
+		end
+	end
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+	char:WaitForChild("Humanoid")
+	char:WaitForChild("Animate", 10)
+	task.wait(0.3)
+	for _, t in ipairs({"Idle","Walk","Run","Jump","Fall","Swim","SwimIdle","Climb"}) do
+		if lastAnimations[t] then pcall(setAnimation, t, lastAnimations[t]) end
+	end
+end)
+
+-------------------------------------------------
+-- THEME (exact Nemesis TouchFling style)
+-------------------------------------------------
+local THEME = {
+	Background   = Color3.fromRGB(244, 249, 255),
+	Panel        = Color3.fromRGB(255, 255, 255),
+	Accent       = Color3.fromRGB(66, 140, 235),
+	Stroke       = Color3.fromRGB(198, 220, 240),
+	TextPrimary  = Color3.fromRGB(30, 50, 72),
+	TextMuted    = Color3.fromRGB(120, 140, 162),
+	ButtonIdle   = Color3.fromRGB(255, 255, 255),
+	ButtonHover  = Color3.fromRGB(224, 238, 252),
+	Card         = Color3.fromRGB(255, 255, 255),
+	CardActive   = Color3.fromRGB(224, 238, 252),
+}
+
+local OPEN_SIZE        = UDim2.new(0, 340, 0, 480)
+local COLLAPSED_HEIGHT = 60
+local TWEEN_INFO       = TweenInfo.new(0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+local HOVER_TWEEN_INFO = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local function tween(instance, props, info)
+	local t = TweenService:Create(instance, info or TWEEN_INFO, props)
+	t:Play()
+	return t
+end
+
+local function corner(parent, radius)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = radius or UDim.new(0, 14)
+	c.Parent = parent
+	return c
+end
+
+local function stroke(parent, color, thickness)
+	local s = Instance.new("UIStroke")
+	s.Color = color or THEME.Stroke
+	s.Thickness = thickness or 1
+	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	s.Parent = parent
+	return s
+end
+
+local function makeButton(parent, props)
+	local btn = Instance.new("TextButton")
+	btn.Size = props.Size or UDim2.new(0, 26, 0, 26)
+	btn.BackgroundColor3 = THEME.ButtonIdle
+	btn.BackgroundTransparency = 0.25
+	btn.AutoButtonColor = false
+	btn.Text = props.Text or ""
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = props.TextSize or 14
+	btn.TextColor3 = props.TextColor3 or THEME.TextPrimary
+	btn.Parent = parent
+	corner(btn, UDim.new(0, 12))
+	local btnStroke = stroke(btn, THEME.Stroke, 1)
+	btnStroke.Transparency = 0.3
+
+	btn.MouseEnter:Connect(function()
+		tween(btn, { BackgroundColor3 = THEME.ButtonHover, BackgroundTransparency = 0.1 }, HOVER_TWEEN_INFO)
+		tween(btnStroke, { Color = THEME.Accent, Transparency = 0 }, HOVER_TWEEN_INFO)
+	end)
+	btn.MouseLeave:Connect(function()
+		tween(btn, { BackgroundColor3 = THEME.ButtonIdle, BackgroundTransparency = 0.25 }, HOVER_TWEEN_INFO)
+		tween(btnStroke, { Color = THEME.Stroke, Transparency = 0.3 }, HOVER_TWEEN_INFO)
+	end)
+	return btn
+end
+
+-------------------------------------------------
+-- GUI
+-------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GazeAnimGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 100
+ScreenGui.Parent = CoreGui
+
+local frame = Instance.new("Frame")
+frame.Name = "Main"
+frame.Size = OPEN_SIZE
+frame.Position = UDim2.new(0.5, -170, 0.5, -240)
+frame.BackgroundColor3 = THEME.Background
+frame.BackgroundTransparency = 0.18
+frame.BorderSizePixel = 0
+frame.ClipsDescendants = true
+frame.Parent = ScreenGui
+corner(frame, UDim.new(0, 26))
+local frameStroke = stroke(frame, THEME.Stroke, 1.3)
+frameStroke.LineJoinMode = Enum.LineJoinMode.Round
+frameStroke.Transparency = 0.15
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+	ColorSequenceKeypoint.new(1, THEME.Background),
+})
+gradient.Rotation = 90
+gradient.Parent = frame
+
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.BackgroundTransparency = 1
+titleBar.Size = UDim2.new(1, 0, 0, 60)
+titleBar.Parent = frame
+
+local logo = Instance.new("ImageLabel")
+logo.BackgroundTransparency = 1
+logo.Size = UDim2.new(0, 32, 0, 32)
+logo.Position = UDim2.new(0, 14, 0.5, -16)
+logo.Image = "rbxassetid://107541043103322"
+logo.Parent = titleBar
+corner(logo, UDim.new(0, 10))
+
+local title = Instance.new("TextLabel")
+title.BackgroundTransparency = 1
+title.Size = UDim2.new(0, 180, 0, 24)
+title.Position = UDim2.new(0, 56, 0.5, -12)
+title.Text = "NEMESIS UGC ANIMATIONS"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.TextColor3 = THEME.TextPrimary
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = titleBar
+
+local minBtn = makeButton(titleBar, { Text = "–", Size = UDim2.new(0, 26, 0, 26) })
+minBtn.Position = UDim2.new(1, -66, 0, 16)
+
+local closeBtn = makeButton(titleBar, { Text = "×", Size = UDim2.new(0, 26, 0, 26), TextColor3 = Color3.fromRGB(220, 90, 90) })
+closeBtn.Position = UDim2.new(1, -34, 0, 16)
+closeBtn.TextSize = 18
+
+local divider = Instance.new("Frame")
+divider.BackgroundColor3 = THEME.Stroke
+divider.BorderSizePixel = 0
+divider.Size = UDim2.new(1, -28, 0, 1)
+divider.Position = UDim2.new(0, 14, 0, 60)
+divider.Parent = frame
+
+local content = Instance.new("Frame")
+content.Name = "Content"
+content.BackgroundTransparency = 1
+content.BorderSizePixel = 0
+content.Position = UDim2.new(0, 14, 0, 70)
+content.Size = UDim2.new(1, -28, 1, -84)
+content.Parent = frame
+
+local TabScroll = Instance.new("ScrollingFrame")
+TabScroll.Name = "TabScroll"
+TabScroll.Size = UDim2.new(1, 0, 0, 34)
+TabScroll.Position = UDim2.new(0, 0, 0, 0)
+TabScroll.BackgroundTransparency = 1
+TabScroll.BorderSizePixel = 0
+TabScroll.ScrollBarThickness = 0
+TabScroll.ScrollingDirection = Enum.ScrollingDirection.X
+TabScroll.CanvasSize = UDim2.new(0, 0, 1, 0)
+TabScroll.ClipsDescendants = true
+TabScroll.Parent = content
+
+local TabLayout = Instance.new("UIListLayout", TabScroll)
+TabLayout.FillDirection = Enum.FillDirection.Horizontal
+TabLayout.Padding = UDim.new(0, 6)
+TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+TabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	TabScroll.CanvasSize = UDim2.new(0, TabLayout.AbsoluteContentSize.X + 4, 1, 0)
+end)
+
+local SearchBox = Instance.new("TextBox")
+SearchBox.Name = "SearchBox"
+SearchBox.Size = UDim2.new(1, 0, 0, 32)
+SearchBox.Position = UDim2.new(0, 0, 0, 42)
+SearchBox.BackgroundColor3 = THEME.Panel
+SearchBox.BorderSizePixel = 0
+SearchBox.Text = ""
+SearchBox.PlaceholderText = "  Search animations..."
+SearchBox.Font = Enum.Font.Gotham
+SearchBox.TextSize = 13
+SearchBox.TextColor3 = THEME.TextPrimary
+SearchBox.PlaceholderColor3 = THEME.TextMuted
+SearchBox.ClearTextOnFocus = false
+SearchBox.Parent = content
+corner(SearchBox, UDim.new(0, 10))
+stroke(SearchBox, THEME.Stroke, 1)
+local sp = Instance.new("UIPadding", SearchBox)
+sp.PaddingLeft = UDim.new(0, 10)
+
+local ListFrame = Instance.new("ScrollingFrame")
+ListFrame.Name = "ListFrame"
+ListFrame.Size = UDim2.new(1, 0, 1, -84)
+ListFrame.Position = UDim2.new(0, 0, 0, 82)
+ListFrame.BackgroundTransparency = 1
+ListFrame.BorderSizePixel = 0
+ListFrame.ScrollBarThickness = 3
+ListFrame.ScrollBarImageColor3 = THEME.Accent
+ListFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+ListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ListFrame.Parent = content
+
+local ListLayout = Instance.new("UIListLayout", ListFrame)
+ListLayout.Padding = UDim.new(0, 6)
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	ListFrame.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 8)
+end)
+
+local CustomFrame = Instance.new("Frame")
+CustomFrame.Name = "CustomFrame"
+CustomFrame.Size = UDim2.new(1, 0, 1, -42)
+CustomFrame.Position = UDim2.new(0, 0, 0, 42)
+CustomFrame.BackgroundTransparency = 1
+CustomFrame.Visible = false
+CustomFrame.Parent = content
+
+local CustomTitle = Instance.new("TextLabel")
+CustomTitle.Size = UDim2.new(1, 0, 0, 20)
+CustomTitle.BackgroundTransparency = 1
+CustomTitle.Text = "Import Animation from Catalog URL"
+CustomTitle.TextColor3 = THEME.TextPrimary
+CustomTitle.Font = Enum.Font.GothamBold
+CustomTitle.TextSize = 13
+CustomTitle.TextXAlignment = Enum.TextXAlignment.Left
+CustomTitle.Parent = CustomFrame
+
+local CustomUrlBox = Instance.new("TextBox")
+CustomUrlBox.Size = UDim2.new(1, 0, 0, 32)
+CustomUrlBox.Position = UDim2.new(0, 0, 0, 26)
+CustomUrlBox.BackgroundColor3 = THEME.Panel
+CustomUrlBox.BorderSizePixel = 0
+CustomUrlBox.PlaceholderText = "Paste Roblox animation URL here..."
+CustomUrlBox.Text = ""
+CustomUrlBox.Font = Enum.Font.Gotham
+CustomUrlBox.TextSize = 12
+CustomUrlBox.TextColor3 = THEME.TextPrimary
+CustomUrlBox.PlaceholderColor3 = THEME.TextMuted
+CustomUrlBox.ClearTextOnFocus = false
+CustomUrlBox.Parent = CustomFrame
+corner(CustomUrlBox, UDim.new(0, 10))
+stroke(CustomUrlBox, THEME.Stroke, 1)
+local cpad = Instance.new("UIPadding", CustomUrlBox)
+cpad.PaddingLeft = UDim.new(0, 10)
+
+local CustomGrid = Instance.new("Frame")
+CustomGrid.Size = UDim2.new(1, 0, 1, -70)
+CustomGrid.Position = UDim2.new(0, 0, 0, 68)
+CustomGrid.BackgroundTransparency = 1
+CustomGrid.Parent = CustomFrame
+
+local CustomGridLayout = Instance.new("UIGridLayout", CustomGrid)
+CustomGridLayout.CellSize = UDim2.new(0.5, -4, 0, 32)
+CustomGridLayout.CellPadding = UDim2.new(0, 8, 0, 8)
+CustomGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-------------------------------------------------
+-- Logic
+-------------------------------------------------
+local currentTab = "Idle"
+local tabBtns = {}
+local animTypes = {"Idle", "Walk", "Run", "Jump", "Fall", "Swim", "SwimIdle", "Climb"}
+
+local function isCurrentAnim(animType, id)
+	local last = lastAnimations[animType]
+	if not last then return false end
+	if type(last) == "table" and type(id) == "table" then
+		return tostring(last[1]) == tostring(id[1])
+	end
+	return tostring(last) == tostring(id)
+end
+
+local function populate(animType, filter)
+	for _, c in ipairs(ListFrame:GetChildren()) do
+		if c:IsA("Frame") or c:IsA("TextButton") then c:Destroy() end
+	end
+	ListFrame.CanvasPosition = Vector2.new(0, 0)
+
+	filter = (filter or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+	local typeAnims = Animations[animType]
+	if not typeAnims then return end
+
+	local order = 0
+	local names = {}
+	for n in pairs(typeAnims) do table.insert(names, n) end
+	table.sort(names)
+
+	for _, name in ipairs(names) do
+		if filter == "" or name:lower():find(filter, 1, true) then
+			local id = typeAnims[name]
+			local active = isCurrentAnim(animType, id)
+
+			local Row = Instance.new("Frame")
+			Row.Name = name
+			Row.LayoutOrder = order
+			Row.Size = UDim2.new(1, 0, 0, 42)
+			Row.BackgroundColor3 = active and THEME.CardActive or THEME.Card
+			Row.BorderSizePixel = 0
+			Row.Parent = ListFrame
+			corner(Row, UDim.new(0, 12))
+			stroke(Row, active and THEME.Accent or THEME.Stroke, 1)
+
+			local Accent = Instance.new("Frame")
+			Accent.Size = UDim2.new(0, 4, 0.6, 0)
+			Accent.Position = UDim2.new(0, 0, 0.2, 0)
+			Accent.BackgroundColor3 = THEME.Accent
+			Accent.BorderSizePixel = 0
+			Accent.Visible = active
+			Accent.Parent = Row
+			corner(Accent, UDim.new(1, 0))
+
+			local NameLbl = Instance.new("TextLabel")
+			NameLbl.Size = UDim2.new(1, -24, 1, 0)
+			NameLbl.Position = UDim2.new(0, 14, 0, 0)
+			NameLbl.BackgroundTransparency = 1
+			NameLbl.Text = name
+			NameLbl.Font = Enum.Font.GothamBold
+			NameLbl.TextSize = 13
+			NameLbl.TextColor3 = THEME.TextPrimary
+			NameLbl.TextXAlignment = Enum.TextXAlignment.Left
+			NameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+			NameLbl.Parent = Row
+
+			local Dot = Instance.new("Frame")
+			Dot.Size = UDim2.new(0, 7, 0, 7)
+			Dot.Position = UDim2.new(1, -16, 0.5, -3.5)
+			Dot.BackgroundColor3 = active and THEME.Accent or Color3.fromRGB(200, 210, 225)
+			Dot.BorderSizePixel = 0
+			Dot.Parent = Row
+			corner(Dot, UDim.new(1, 0))
+
+			local Btn = Instance.new("TextButton")
+			Btn.Size = UDim2.new(1, 0, 1, 0)
+			Btn.BackgroundTransparency = 1
+			Btn.Text = ""
+			Btn.ZIndex = 5
+			Btn.Parent = Row
+
+			Btn.MouseEnter:Connect(function()
+				if not active then
+					tween(Row, {BackgroundColor3 = THEME.ButtonHover}, HOVER_TWEEN_INFO)
+				end
+			end)
+			Btn.MouseLeave:Connect(function()
+				if not active then
+					tween(Row, {BackgroundColor3 = THEME.Card}, HOVER_TWEEN_INFO)
+				end
+			end)
+
+			Btn.MouseButton1Click:Connect(function()
+				pcall(function()
+					setAnimation(animType, id)
+				end)
+				task.delay(0.25, function()
+					populate(currentTab, SearchBox.Text)
+				end)
+			end)
+
+			order += 1
+		end
+	end
+end
+
+local function setTab(typeName)
+	currentTab = typeName
+	local isCustom = (typeName == "Custom")
+	SearchBox.Visible = not isCustom
+	ListFrame.Visible = not isCustom
+	CustomFrame.Visible = isCustom
+
+	for _, t in ipairs(animTypes) do
+		local btn = tabBtns[t]
+		if btn then
+			if t == typeName then
+				tween(btn, {BackgroundColor3 = THEME.Accent}, HOVER_TWEEN_INFO)
+				btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			else
+				tween(btn, {BackgroundColor3 = THEME.Panel}, HOVER_TWEEN_INFO)
+				btn.TextColor3 = THEME.TextMuted
+			end
+		end
+	end
+	if tabBtns["Custom"] then
+		if typeName == "Custom" then
+			tween(tabBtns["Custom"], {BackgroundColor3 = THEME.Accent}, HOVER_TWEEN_INFO)
+			tabBtns["Custom"].TextColor3 = Color3.fromRGB(255, 255, 255)
+		else
+			tween(tabBtns["Custom"], {BackgroundColor3 = THEME.Panel}, HOVER_TWEEN_INFO)
+			tabBtns["Custom"].TextColor3 = THEME.TextMuted
+		end
+	end
+
+	if not isCustom then
+		populate(typeName, SearchBox.Text)
+	end
+end
+
+local resetTabBtn = Instance.new("TextButton")
+resetTabBtn.LayoutOrder = -1
+resetTabBtn.Size = UDim2.new(0, 64, 0, 28)
+resetTabBtn.BackgroundColor3 = Color3.fromRGB(235, 90, 90)
+resetTabBtn.BorderSizePixel = 0
+resetTabBtn.Text = "Reset"
+resetTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+resetTabBtn.TextSize = 12
+resetTabBtn.Font = Enum.Font.GothamBold
+resetTabBtn.Parent = TabScroll
+corner(resetTabBtn, UDim.new(0, 10))
+stroke(resetTabBtn, Color3.fromRGB(200, 70, 70), 1)
+
+resetTabBtn.MouseButton1Click:Connect(function()
+	fullReset()
+end)
+
+for i, typeName in ipairs(animTypes) do
+	local btn = Instance.new("TextButton")
+	btn.LayoutOrder = i
+	btn.Size = UDim2.new(0, 72, 0, 28)
+	btn.BackgroundColor3 = THEME.Panel
+	btn.BorderSizePixel = 0
+	btn.Text = typeName
+	btn.TextColor3 = THEME.TextMuted
+	btn.TextSize = 12
+	btn.Font = Enum.Font.GothamBold
+	btn.Parent = TabScroll
+	corner(btn, UDim.new(0, 10))
+	stroke(btn, THEME.Stroke, 1)
+	tabBtns[typeName] = btn
+	btn.MouseButton1Click:Connect(function() setTab(typeName) end)
+end
+
+local customTabBtn = Instance.new("TextButton")
+customTabBtn.LayoutOrder = #animTypes + 1
+customTabBtn.Size = UDim2.new(0, 72, 0, 28)
+customTabBtn.BackgroundColor3 = THEME.Panel
+customTabBtn.BorderSizePixel = 0
+customTabBtn.Text = "Custom"
+customTabBtn.TextColor3 = THEME.TextMuted
+customTabBtn.TextSize = 12
+customTabBtn.Font = Enum.Font.GothamBold
+customTabBtn.Parent = TabScroll
+corner(customTabBtn, UDim.new(0, 10))
+stroke(customTabBtn, THEME.Stroke, 1)
+tabBtns["Custom"] = customTabBtn
+customTabBtn.MouseButton1Click:Connect(function() setTab("Custom") end)
+
+for i, t in ipairs(animTypes) do
+	local applyBtn = Instance.new("TextButton")
+	applyBtn.LayoutOrder = i
+	applyBtn.BackgroundColor3 = THEME.Panel
+	applyBtn.BorderSizePixel = 0
+	applyBtn.Text = "+ " .. t
+	applyBtn.TextColor3 = THEME.TextPrimary
+	applyBtn.TextSize = 12
+	applyBtn.Font = Enum.Font.GothamBold
+	applyBtn.Parent = CustomGrid
+	corner(applyBtn, UDim.new(0, 10))
+	stroke(applyBtn, THEME.Stroke, 1)
+
+	applyBtn.MouseButton1Click:Connect(function()
+		local txt = CustomUrlBox.Text
+		local id = txt:match("(%d+)")
+		if id then
+			Animations[t] = Animations[t] or {}
+			local animName = "Custom (" .. id .. ")"
+			if t == "Idle" then
+				Animations[t][animName] = {id, id}
+			else
+				Animations[t][animName] = id
+			end
+			pcall(function() writefile("GreyLikesToSmellUrFeet.json", HttpService:JSONEncode(Animations)) end)
+
+			CustomUrlBox.Text = ""
+			setTab(t)
+			setAnimation(t, Animations[t][animName])
+		end
+	end)
+end
+
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+	populate(currentTab, SearchBox.Text)
+end)
+
+-------------------------------------------------
+-- Drag / Minimize / Close
+-------------------------------------------------
+closeBtn.MouseButton1Click:Connect(function()
+	local t = tween(frame, { Size = UDim2.new(0, 340, 0, 0), BackgroundTransparency = 1 })
+	t.Completed:Connect(function()
+		ScreenGui:Destroy()
+	end)
+end)
+
+local minimized = false
+local expandedSize = OPEN_SIZE
+minBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	if minimized then
+		expandedSize = frame.Size
+		content.Visible = false
+		divider.Visible = false
+		tween(frame, { Size = UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, COLLAPSED_HEIGHT) })
+		minBtn.Text = "+"
+	else
+		tween(frame, { Size = expandedSize })
+		task.delay(TWEEN_INFO.Time, function()
+			content.Visible = true
+			divider.Visible = true
+		end)
+		minBtn.Text = "–"
+	end
+end)
+
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function updateDrag(input)
+	local delta = input.Position - dragStart
+	frame.Position = UDim2.new(
+		startPos.X.Scale, startPos.X.Offset + delta.X,
+		startPos.Y.Scale, startPos.Y.Offset + delta.Y
+	)
+end
+
+titleBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then dragging = false end
+		end)
+	end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and input == dragInput then updateDrag(input) end
+end)
+
+local function LoadAndUpdateAnimations()
+	local ok, result = pcall(function()
+		return game:HttpGet("https://raw.githubusercontent.com/Gazer-Ha/Gaze-stuff/refs/heads/main/Gaze%20Anim%20Database")
+	end)
+	if not ok or not result then return end
+
+	local fn = loadstring(result)
+	if not fn then return end
+	local pok, onlineAnims = pcall(fn)
+	if not pok or type(onlineAnims) ~= "table" then return end
+
+	local changed = false
+
+	local function sameAnim(a, b)
+		if type(a) ~= type(b) then return false end
+		if type(a) == "table" then
+			if #a ~= #b then return false end
+			for i = 1, #a do
+				if tostring(a[i]) ~= tostring(b[i]) then return false end
+			end
+			return true
+		end
+		return tostring(a) == tostring(b)
+	end
+
+	for animType, typeAnims in pairs(onlineAnims) do
+		local fileType = fileAnimations[animType] or {}
+		for name, data in pairs(typeAnims) do
+			if not fileType[name] then
+				Animations[animType] = Animations[animType] or {}
+				Animations[animType][name] = data
+				fileAnimations[animType] = fileAnimations[animType] or {}
+				fileAnimations[animType][name] = data
+				changed = true
+			elseif not sameAnim(data, fileType[name]) then
+				Animations[animType][name] = data
+				fileAnimations[animType][name] = data
+				changed = true
+			end
+		end
+	end
+
+	if changed then
+		pcall(writefile, "GreyLikesToSmellUrFeet.json", HttpService:JSONEncode(Animations))
+		populate(currentTab, SearchBox.Text)
+	end
+end
+
+frame.Size = UDim2.new(0, 340, 0, 0)
+tween(frame, { Size = OPEN_SIZE })
+
+setTab("Idle")
+loadLastAnimations()
+
+task.delay(1, function()
+	LoadAndUpdateAnimations()
+end)
+
+end)
