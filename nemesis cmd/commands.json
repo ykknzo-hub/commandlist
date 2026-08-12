@@ -11,16 +11,16 @@
   "JERK OFF": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/nemesis%20jerk%20off.txt\"))()",
   "TP PANEL": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/tp%20panel.txt\"))()",
   "_chat_commands": {
-    ".antivcban":     "Touch Fling",
-    ".reverse":       "Superman Fly",
-    ".shmost":     "Invisible",
-    ".touchfling":        "UI Manager",
-    ".trip":      "FaceBang",
-    ".walkonair":     "UGC Animations",
-    ".ugcanims":        "Headsit + FuckMode",
-    ".flip":      "Baseplate Expander",
-    ".fly":        "Jerk Off Panel",
-    ".joff":     "Emote Wheel",
-    ".tppanel":    "Rewind"
+    ".antivcban":     "ANTIVCBAN",
+    ".reverse":       "REVERSE",
+    ".shmost":     "SHMOST",
+    ".touchfling":        "TOUCHFLING",
+    ".trip":      "TRIP",
+    ".walkonair":     "WALKONAIR",
+    ".ugcanims":        "UGCANIMS",
+    ".flip":      "FLIP",
+    ".fly":        "FLY",
+    ".joff":     "JERK OFF",
+    ".tppanel":    "TP PANEL"
   }
 }
