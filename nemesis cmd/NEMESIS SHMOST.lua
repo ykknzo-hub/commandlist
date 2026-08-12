@@ -9,7 +9,7 @@ local LocalPlayer = Players.LocalPlayer
 local pg = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Prevent duplicate UI instances
-local existing = pg:FindFirstChild("TemplateGui")
+local existing = pg:FindFirstChild("ShmostGui")
 if existing then existing:Destroy() end
 
 --------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ end
 -- UI CONSTRUCTION (TEMPLATE)
 --------------------------------------------------------------------------------
 local gui = Instance.new("ScreenGui")
-gui.Name = "TemplateGui"
+gui.Name = "ShmostGui"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 100
