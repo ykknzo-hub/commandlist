@@ -12,7 +12,7 @@ local RunService = game:GetService("RunService")
 local lp = Players.LocalPlayer
 local pg = lp:WaitForChild("PlayerGui")
 
-local existing = pg:FindFirstChild("TemplateGui")
+local existing = pg:FindFirstChild("ReverseGui")
 if existing then existing:Destroy() end
 
 -------------------------------------------------
@@ -120,7 +120,7 @@ end
 -- Main Interface Framing
 -------------------------------------------------
 local gui = Instance.new("ScreenGui")
-gui.Name = "TemplateGui"
+gui.Name = "ReverseGui"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 100
