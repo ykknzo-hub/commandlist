@@ -10,6 +10,7 @@
   "FLY": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/nemesis%20fly.txt\"))()",
   "JERK OFF": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/nemesis%20jerk%20off.txt\"))()",
   "TP PANEL": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/tp%20panel.txt\"))()",
+  "AIMLOCK": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20AIMLOCK.lua\"))()",
   "_chat_commands": {
     "antivcban": "ANTIVCBAN",
     "reverse": "REVERSE",
@@ -21,6 +22,7 @@
     "flip": "FLIP",
     "fly": "FLY",
     "joff": "JERK OFF",
+    "aimlock": "AIMLOCK",
     "tppanel": "TP PANEL"
   }
 }
