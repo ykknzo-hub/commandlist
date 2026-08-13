@@ -118,11 +118,17 @@ RunService.RenderStepped:Connect(function()
 
 			if shouldHide then
 				if plr.Character and plr.Character:IsDescendantOf(workspace) then
+					-- Teleport the character far out of the map to break spatial audio/voice chat range
+					plr.Character:PivotTo(CFrame.new(999999, 999999, 999999))
+					
+					-- Then move them into the HideFolder
 					plr.Character.Parent = HideFolder
 				end
 			else
 				if plr.Character and plr.Character.Parent == HideFolder then
+					-- Put them back in the map
 					plr.Character.Parent = workspace
+					-- (The server will automatically snap their position back to where they actually are)
 				end
 			end
 		end
