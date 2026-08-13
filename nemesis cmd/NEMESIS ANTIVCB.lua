@@ -1,4 +1,3 @@
--- NEMESIS-STYLE UI - ANTIVCB (Xeno Max Compatibility)
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -6,16 +5,11 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Safely determine where to parent the UI
 local TargetGuiService = (typeof(gethui) == "function" and gethui()) or PlayerGui
 
--- Prevent duplicate UI
 local existing = TargetGuiService:FindFirstChild("NemesisAntiVCBGui")
 if existing then existing:Destroy() end
 
---------------------------------------------------------------------------------
--- THEME
---------------------------------------------------------------------------------
 local THEME = {
 	Background   = Color3.fromRGB(244, 249, 255),
 	Panel        = Color3.fromRGB(255, 255, 255),
@@ -36,9 +30,6 @@ local HOVER_TWEEN_INFO = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingD
 
 local CUSTOM_LOGO_ID = "rbxassetid://107541043103322"
 
---------------------------------------------------------------------------------
--- HELPERS
---------------------------------------------------------------------------------
 local function tween(instance, props, info)
 	local t = TweenService:Create(instance, info or TWEEN_INFO, props)
 	t:Play()
@@ -95,9 +86,6 @@ local function makeButton(parent, props)
 	return btn, btnStroke
 end
 
---------------------------------------------------------------------------------
--- UI
---------------------------------------------------------------------------------
 local gui = Instance.new("ScreenGui")
 gui.Name = "NemesisAntiVCBGui"
 gui.IgnoreGuiInset = true
