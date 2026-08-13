@@ -15,6 +15,7 @@
   "Position Saver": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20POSITION%20SAVER.lua\"))()",
   "Rejoin": "loadstring(game:HttpGet(\"https://pastebin.com/raw/5kcf62qz\"))()",
   "Baseplate Expander": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/Baseplate%20Expander.lua\"))()",
+  "Hide Players": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20HIDE%20PLAYERS.lua\"))()",
   "_chat_commands": {
     "vcban": "AntiVCBan",
     "reverse": "Reverse",
@@ -31,6 +32,7 @@
     "sliders": "Sliders",
     "psaver": "Position Saver",
     "rj": "Rejoin",
-    "bs": "Baseplate Expander"
+    "bs": "Baseplate Expander",
+    "hide": "Hide Players"
   }
 }
