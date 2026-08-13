@@ -13,6 +13,7 @@
   "Aimlock": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20AIMLOCK.lua\"))()",
   "Sliders": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20SLIDERS.lua\"))()",
   "Position Saver": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20POSITION%20SAVER.lua\"))()",
+  "Rejoin": "loadstring(game:HttpGet(\"https://pastebin.com/raw/5kcf62qz\"))()"
   "_chat_commands": {
     "vcban": "AntiVCBan",
     "reverse": "Reverse",
@@ -27,6 +28,7 @@
     "tppanel": "TP Panel",
     "aimlock": "Aimlock",
     "sliders": "Sliders",
-    "psaver": "Position Saver"
+    "psaver": "Position Saver",
+    "rj": "Rejoin"
   }
 }
