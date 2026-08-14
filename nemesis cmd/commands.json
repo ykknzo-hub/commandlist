@@ -1,5 +1,6 @@
 {
   "AntiVCBan": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20ANTIVCB.lua\"))()",
+  "FaceBang": "loadstring(game:HttpGet(\"https://pastebin.com/raw/7SamkYVk\"))()",
   "Reverse": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20REVERSE.lua\"))()",
   "SHmost": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20SHMOST.lua\"))()",
   "Touchflng": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20TOUCHFLING.lua\"))()",
