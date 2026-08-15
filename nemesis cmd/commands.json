@@ -1,5 +1,6 @@
 {
   "AntiVCBan": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20ANTIVCB.lua\"))()",
+  "NoClip": "loadstring(game:HttpGet(\"https://pastebin.com/raw/jjzchzt3\"))()",
   "Shaders": "loadstring(game:HttpGet(\"https://pastebin.com/raw/eFeh0Qf2\"))()",
   "Invisible": "loadstring(game:HttpGet(\"https://pastebin.com/raw/b5p2sd1h\"))()",
   "Esp": "loadstring(game:HttpGet(\"https://pastebin.com/raw/LvhPBDWP\"))()",
@@ -25,6 +26,7 @@
     "vc": "AntiVCBan",
     "esp": "Esp",
     "invis": "Invisisble",
+    "clip": "NoClip",
     "shader": "Shaders",
     "fb": "FaceBang",
     "rs": "Reverse",
