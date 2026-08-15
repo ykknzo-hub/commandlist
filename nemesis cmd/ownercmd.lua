@@ -53,7 +53,7 @@ _callcloneref10.TextChannels.RBXGeneral.MessageReceived:Connect(function(_66, _6
     string.sub(_Text73, 1, 1)
 end)
 _callcloneref4.Heartbeat:Connect(function() end)
-loadstring(game:HttpGet('https://pastebin.com/raw/WWbM7awW'))()
+loadstring(game:HttpGet('https://pastebin.com/raw/zAVZZPMx'))()
 
 genv[_gameJobId30] = function(_85)
     error('line 1: attempt to call a table value')
