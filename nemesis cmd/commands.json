@@ -1,6 +1,7 @@
 {
   "AntiVCBan": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20ANTIVCB.lua\"))()",
   "Shaders": "loadstring(game:HttpGet(\"https://pastebin.com/raw/eFeh0Qf2\"))()",
+  "Esp": "loadstring(game:HttpGet(\"https://pastebin.com/raw/LvhPBDWP\"))()",
   "FaceBang": "loadstring(game:HttpGet(\"https://pastebin.com/raw/7SamkYVk\"))()",
   "Reverse": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20REVERSE.lua\"))()",
   "SHmost": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/NEMESIS%20SHMOST.lua\"))()",
@@ -21,6 +22,7 @@
   "Infinite Yield": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source\"))()",
   "_chat_commands": {
     "vc": "AntiVCBan",
+    "esp": "Esp",
     "shader": "Shaders",
     "fb": "FaceBang",
     "rs": "Reverse",
