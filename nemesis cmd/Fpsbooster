@@ -1,0 +1,683 @@
+-- NEMESIS FPS BOOSTER (B&W + White Logo + Proper Off + Reset)
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local TargetGui = (typeof(gethui) == "function" and gethui()) or PlayerGui
+
+local existing = TargetGui:FindFirstChild("NemesisFPSBoosterGui")
+if existing then existing:Destroy() end
+
+--------------------------------------------------------------------------------
+-- THEME (BLACK AND WHITE)
+--------------------------------------------------------------------------------
+local THEME = {
+	Background   = Color3.fromRGB(15, 15, 15),
+	Panel        = Color3.fromRGB(25, 25, 25),
+	Accent       = Color3.fromRGB(255, 255, 255),
+	Stroke       = Color3.fromRGB(80, 80, 80),
+	TextPrimary  = Color3.fromRGB(255, 255, 255),
+	TextMuted    = Color3.fromRGB(200, 200, 200),
+	ButtonIdle   = Color3.fromRGB(30, 30, 30),
+	ButtonHover  = Color3.fromRGB(50, 50, 50),
+	Danger       = Color3.fromRGB(255, 255, 255),
+	Success      = Color3.fromRGB(255, 255, 255),
+}
+
+local OPEN_SIZE = UDim2.new(0, 320, 0, 460)
+local COLLAPSED_HEIGHT = 48
+local TWEEN_INFO = TweenInfo.new(0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+local HOVER_TWEEN = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local LOGO_PATH = "whitelogo.png"
+local LOGO_DOWNLOAD_URL = "https://i.ibb.co/SwGkMS5h/whitelogo.png"
+local FALLBACK_LOGO = "rbxassetid://107541043103322"
+
+local function getLogoImage()
+	if typeof(getcustomasset) == "function" then
+		if isfile and isfile(LOGO_PATH) then
+			local ok, asset = pcall(getcustomasset, LOGO_PATH)
+			if ok and asset then return asset end
+		end
+		if LOGO_DOWNLOAD_URL ~= "" and (not isfile or not isfile(LOGO_PATH)) then
+			local ok, data = pcall(function() return game:HttpGet(LOGO_DOWNLOAD_URL) end)
+			if ok and type(data) == "string" and #data > 200 then
+				pcall(writefile, LOGO_PATH, data)
+				if isfile and isfile(LOGO_PATH) then
+					local ok2, asset = pcall(getcustomasset, LOGO_PATH)
+					if ok2 and asset then return asset end
+				end
+			end
+		end
+	end
+	return FALLBACK_LOGO
+end
+
+--------------------------------------------------------------------------------
+-- STATE + CACHE (so OFF restores properly)
+--------------------------------------------------------------------------------
+local S = {
+	LowQuality = false,
+	NoShadows = false,
+	NoPostFX = false,
+	NoParticles = false,
+	NoTextures = false,
+	NoTerrainDeco = false,
+	Fullbright = false,
+	DisableWater = false,
+	OptimizeMesh = false,
+	GCBoost = false,
+	UnlockFPS = false,
+	TargetFPS = 0,
+	GraphicsQuality = 1,
+}
+
+local cache = {
+	GlobalShadows = Lighting.GlobalShadows,
+	Brightness = Lighting.Brightness,
+	ClockTime = Lighting.ClockTime,
+	FogEnd = Lighting.FogEnd,
+	Technology = Lighting.Technology,
+	TerrainDecoration = true,
+	WaterWaveSize = 0.15,
+	WaterWaveSpeed = 10,
+	WaterReflectance = 1,
+	WaterTransparency = 0.3,
+	PostFX = {},      -- [instance] = Enabled
+	Particles = {},   -- [instance] = Enabled
+	Materials = {},   -- [part] = {Material, TextureID}
+	Decals = {},      -- [decal] = Transparency
+}
+
+pcall(function()
+	cache.TerrainDecoration = Workspace.Terrain.Decoration
+	cache.WaterWaveSize = Workspace.Terrain.WaterWaveSize
+	cache.WaterWaveSpeed = Workspace.Terrain.WaterWaveSpeed
+	cache.WaterReflectance = Workspace.Terrain.WaterReflectance
+	cache.WaterTransparency = Workspace.Terrain.WaterTransparency
+end)
+
+local gcThread = nil
+local toggleSetters = {} -- key -> setVisual(on)
+
+--------------------------------------------------------------------------------
+-- HELPERS
+--------------------------------------------------------------------------------
+local function tween(i, p, info)
+	local t = TweenService:Create(i, info or TWEEN_INFO, p)
+	t:Play()
+	return t
+end
+
+local function corner(p, r)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = r or UDim.new(0, 12)
+	c.Parent = p
+end
+
+local function stroke(p, col, th)
+	local s = Instance.new("UIStroke")
+	s.Color = col or THEME.Stroke
+	s.Thickness = th or 1
+	s.Parent = p
+	return s
+end
+
+local function makeButton(parent, props)
+	local btn = Instance.new("TextButton")
+	btn.Size = props.Size or UDim2.new(1, 0, 0, 30)
+	btn.BackgroundColor3 = props.BackgroundColor3 or THEME.ButtonIdle
+	btn.BackgroundTransparency = props.BackgroundTransparency or 0.25
+	btn.AutoButtonColor = false
+	btn.Text = props.Text or ""
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = props.TextSize or 12
+	btn.TextColor3 = props.TextColor3 or THEME.TextPrimary
+	btn.Parent = parent
+	corner(btn, UDim.new(0, 8))
+	local st = stroke(btn)
+	st.Transparency = 0.3
+	btn.MouseEnter:Connect(function()
+		tween(btn, { BackgroundColor3 = THEME.ButtonHover, BackgroundTransparency = 0.1 }, HOVER_TWEEN)
+		tween(st, { Color = THEME.Accent, Transparency = 0 }, HOVER_TWEEN)
+	end)
+	btn.MouseLeave:Connect(function()
+		tween(btn, {
+			BackgroundColor3 = props.BackgroundColor3 or THEME.ButtonIdle,
+			BackgroundTransparency = props.BackgroundTransparency or 0.25
+		}, HOVER_TWEEN)
+		tween(st, { Color = THEME.Stroke, Transparency = 0.3 }, HOVER_TWEEN)
+	end)
+	return btn
+end
+
+--------------------------------------------------------------------------------
+-- APPLY / RESTORE
+--------------------------------------------------------------------------------
+local function setLowQuality(on)
+	if on then
+		pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+	else
+		pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic end)
+	end
+end
+
+local function setNoShadows(on)
+	if on then
+		Lighting.GlobalShadows = false
+	else
+		Lighting.GlobalShadows = cache.GlobalShadows
+	end
+end
+
+local function setNoPostFX(on)
+	if on then
+		for _, v in ipairs(Lighting:GetChildren()) do
+			if v:IsA("BlurEffect") or v:IsA("BloomEffect") or v:IsA("SunRaysEffect")
+				or v:IsA("ColorCorrectionEffect") or v:IsA("DepthOfFieldEffect") then
+				if cache.PostFX[v] == nil then
+					cache.PostFX[v] = v.Enabled
+				end
+				v.Enabled = false
+			end
+		end
+	else
+		for inst, was in pairs(cache.PostFX) do
+			if inst and inst.Parent then
+				inst.Enabled = was
+			end
+		end
+	end
+end
+
+local function setNoParticles(on)
+	if on then
+		for _, v in ipairs(Workspace:GetDescendants()) do
+			if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
+				if cache.Particles[v] == nil then
+					cache.Particles[v] = v.Enabled
+				end
+				v.Enabled = false
+			end
+		end
+	else
+		for inst, was in pairs(cache.Particles) do
+			if inst and inst.Parent then
+				inst.Enabled = was
+			end
+		end
+	end
+end
+
+local function setNoTextures(on)
+	if on then
+		for _, v in ipairs(Workspace:GetDescendants()) do
+			if v:IsA("BasePart") then
+				if cache.Materials[v] == nil then
+					cache.Materials[v] = {
+						Material = v.Material,
+						TextureID = v:IsA("MeshPart") and v.TextureID or nil,
+					}
+				end
+				pcall(function()
+					v.Material = Enum.Material.SmoothPlastic
+					if v:IsA("MeshPart") then v.TextureID = "" end
+				end)
+			elseif v:IsA("Decal") or v:IsA("Texture") then
+				if cache.Decals[v] == nil then
+					cache.Decals[v] = v.Transparency
+				end
+				v.Transparency = 1
+			end
+		end
+	else
+		for part, data in pairs(cache.Materials) do
+			if part and part.Parent then
+				pcall(function()
+					part.Material = data.Material
+					if part:IsA("MeshPart") and data.TextureID ~= nil then
+						part.TextureID = data.TextureID
+					end
+				end)
+			end
+		end
+		for decal, trans in pairs(cache.Decals) do
+			if decal and decal.Parent then
+				decal.Transparency = trans
+			end
+		end
+	end
+end
+
+local function setNoTerrainDeco(on)
+	pcall(function()
+		Workspace.Terrain.Decoration = on and false or cache.TerrainDecoration
+	end)
+end
+
+local function setFullbright(on)
+	if on then
+		Lighting.Brightness = 2
+		Lighting.ClockTime = 14
+		Lighting.FogEnd = 9e9
+		Lighting.GlobalShadows = false
+		pcall(function() Lighting.Technology = Enum.Technology.Compatibility end)
+	else
+		Lighting.Brightness = cache.Brightness
+		Lighting.ClockTime = cache.ClockTime
+		Lighting.FogEnd = cache.FogEnd
+		Lighting.GlobalShadows = S.NoShadows and false or cache.GlobalShadows
+		pcall(function() Lighting.Technology = cache.Technology end)
+	end
+end
+
+local function setDisableWater(on)
+	pcall(function()
+		if on then
+			Workspace.Terrain.WaterWaveSize = 0
+			Workspace.Terrain.WaterWaveSpeed = 0
+			Workspace.Terrain.WaterReflectance = 0
+			Workspace.Terrain.WaterTransparency = 0
+		else
+			Workspace.Terrain.WaterWaveSize = cache.WaterWaveSize
+			Workspace.Terrain.WaterWaveSpeed = cache.WaterWaveSpeed
+			Workspace.Terrain.WaterReflectance = cache.WaterReflectance
+			Workspace.Terrain.WaterTransparency = cache.WaterTransparency
+		end
+	end)
+end
+
+local function setOptimizeMesh(on)
+	pcall(function()
+		if on then
+			settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level04
+		else
+			settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.DistanceBased
+		end
+	end)
+end
+
+local function setGCBoost(on)
+	if gcThread then
+		S.GCBoost = false
+		gcThread = nil
+	end
+	if on then
+		S.GCBoost = true
+		gcThread = task.spawn(function()
+			while S.GCBoost do
+				pcall(function() collectgarbage("collect") end)
+				task.wait(5)
+			end
+		end)
+	end
+end
+
+local function setUnlockFPS(on)
+	if on then
+		local cap = S.TargetFPS
+		if cap and cap > 0 then
+			pcall(function() setfpscap(cap) end)
+		else
+			pcall(function() setfpscap(9999) end)
+		end
+	else
+		pcall(function() setfpscap(60) end)
+	end
+end
+
+local function setGraphicsQuality(level)
+	level = math.clamp(math.floor(level), 1, 10)
+	S.GraphicsQuality = level
+	pcall(function()
+		local enumName = "Level0" .. tostring(level)
+		settings().Rendering.QualityLevel = Enum.QualityLevel[enumName] or Enum.QualityLevel.Level01
+	end)
+end
+
+local function applyKey(key, on)
+	S[key] = on
+	if key == "LowQuality" then setLowQuality(on)
+	elseif key == "NoShadows" then setNoShadows(on)
+	elseif key == "NoPostFX" then setNoPostFX(on)
+	elseif key == "NoParticles" then setNoParticles(on)
+	elseif key == "NoTextures" then setNoTextures(on)
+	elseif key == "NoTerrainDeco" then setNoTerrainDeco(on)
+	elseif key == "Fullbright" then setFullbright(on)
+	elseif key == "DisableWater" then setDisableWater(on)
+	elseif key == "OptimizeMesh" then setOptimizeMesh(on)
+	elseif key == "GCBoost" then setGCBoost(on)
+	elseif key == "UnlockFPS" then setUnlockFPS(on)
+	end
+end
+
+local function resetAll()
+	local keys = {
+		"LowQuality", "NoShadows", "NoPostFX", "NoParticles", "NoTextures",
+		"NoTerrainDeco", "Fullbright", "DisableWater", "OptimizeMesh", "GCBoost", "UnlockFPS"
+	}
+	for _, key in ipairs(keys) do
+		applyKey(key, false)
+		if toggleSetters[key] then
+			toggleSetters[key](false)
+		end
+	end
+	S.TargetFPS = 0
+	S.GraphicsQuality = 1
+	pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic end)
+	pcall(function() setfpscap(60) end)
+end
+
+local function maxBoost()
+	local keys = {
+		"LowQuality", "NoShadows", "NoPostFX", "NoParticles", "NoTextures",
+		"NoTerrainDeco", "Fullbright", "DisableWater", "OptimizeMesh", "GCBoost", "UnlockFPS"
+	}
+	for _, key in ipairs(keys) do
+		applyKey(key, true)
+		if toggleSetters[key] then
+			toggleSetters[key](true)
+		end
+	end
+end
+
+--------------------------------------------------------------------------------
+-- UI
+--------------------------------------------------------------------------------
+local gui = Instance.new("ScreenGui")
+gui.Name = "NemesisFPSBoosterGui"
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 999999
+gui.Parent = TargetGui
+
+local frame = Instance.new("Frame")
+frame.Name = "Main"
+frame.Size = OPEN_SIZE
+frame.Position = UDim2.new(0.5, -160, 0.5, -230)
+frame.BackgroundColor3 = THEME.Background
+frame.BackgroundTransparency = 0.15
+frame.BorderSizePixel = 0
+frame.ClipsDescendants = true
+frame.Parent = gui
+corner(frame, UDim.new(0, 16))
+stroke(frame, THEME.Stroke, 1.2)
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)),
+	ColorSequenceKeypoint.new(1, THEME.Background),
+})
+gradient.Rotation = 90
+gradient.Parent = frame
+
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 48)
+titleBar.BackgroundTransparency = 1
+titleBar.Parent = frame
+
+local logo = Instance.new("ImageLabel")
+logo.Size = UDim2.new(0, 26, 0, 26)
+logo.Position = UDim2.new(0, 12, 0.5, -13)
+logo.BackgroundTransparency = 1
+logo.Image = getLogoImage()
+logo.ScaleType = Enum.ScaleType.Fit
+logo.Parent = titleBar
+corner(logo, UDim.new(0, 8))
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0, 160, 0, 22)
+title.Position = UDim2.new(0, 46, 0.5, -11)
+title.BackgroundTransparency = 1
+title.Text = "NEMESIS FPS Booster"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.TextColor3 = THEME.TextPrimary
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = titleBar
+
+local minBtn = makeButton(titleBar, { Text = "–", Size = UDim2.new(0, 24, 0, 24) })
+minBtn.Position = UDim2.new(1, -58, 0, 12)
+
+local closeBtn = makeButton(titleBar, { Text = "×", Size = UDim2.new(0, 24, 0, 24) })
+closeBtn.Position = UDim2.new(1, -30, 0, 12)
+closeBtn.TextSize = 16
+
+local divider = Instance.new("Frame")
+divider.Size = UDim2.new(1, -24, 0, 1)
+divider.Position = UDim2.new(0, 12, 0, 48)
+divider.BackgroundColor3 = THEME.Stroke
+divider.BorderSizePixel = 0
+divider.Parent = frame
+
+local content = Instance.new("ScrollingFrame")
+content.BackgroundTransparency = 1
+content.Position = UDim2.new(0, 12, 0, 56)
+content.Size = UDim2.new(1, -24, 1, -68)
+content.ScrollBarThickness = 3
+content.ScrollBarImageColor3 = THEME.Accent
+content.BorderSizePixel = 0
+content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+content.CanvasSize = UDim2.new(0, 0, 0, 0)
+content.Parent = frame
+
+local list = Instance.new("UIListLayout")
+list.Padding = UDim.new(0, 6)
+list.Parent = content
+
+local function section(text)
+	local l = Instance.new("TextLabel")
+	l.Size = UDim2.new(1, 0, 0, 16)
+	l.BackgroundTransparency = 1
+	l.Text = text
+	l.Font = Enum.Font.GothamBold
+	l.TextSize = 11
+	l.TextColor3 = THEME.TextMuted
+	l.TextXAlignment = Enum.TextXAlignment.Left
+	l.Parent = content
+end
+
+local function makeToggle(name, key)
+	local row = Instance.new("Frame")
+	row.Size = UDim2.new(1, 0, 0, 32)
+	row.BackgroundColor3 = THEME.Panel
+	row.BorderSizePixel = 0
+	row.Parent = content
+	corner(row, UDim.new(0, 8))
+	stroke(row).Transparency = 0.35
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, -58, 1, 0)
+	label.Position = UDim2.new(0, 10, 0, 0)
+	label.BackgroundTransparency = 1
+	label.Text = name
+	label.Font = Enum.Font.GothamBold
+	label.TextSize = 12
+	label.TextColor3 = THEME.TextPrimary
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = row
+
+	local bg = Instance.new("Frame")
+	bg.Size = UDim2.new(0, 38, 0, 18)
+	bg.Position = UDim2.new(1, -48, 0.5, -9)
+	bg.BackgroundColor3 = THEME.Stroke
+	bg.BorderSizePixel = 0
+	bg.Parent = row
+	corner(bg, UDim.new(1, 0))
+
+	local circle = Instance.new("Frame")
+	circle.Size = UDim2.new(0, 12, 0, 12)
+	circle.Position = UDim2.new(0, 3, 0.5, -6)
+	circle.BackgroundColor3 = Color3.new(1, 1, 1)
+	circle.BorderSizePixel = 0
+	circle.Parent = bg
+	corner(circle, UDim.new(1, 0))
+
+	local function setVisual(on)
+		if on then
+			tween(bg, { BackgroundColor3 = Color3.fromRGB(255, 255, 255) }, HOVER_TWEEN)
+			circle.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+			circle:TweenPosition(UDim2.new(1, -15, 0.5, -6), "Out", "Quad", 0.12, true)
+		else
+			tween(bg, { BackgroundColor3 = THEME.Stroke }, HOVER_TWEEN)
+			circle.BackgroundColor3 = Color3.new(1, 1, 1)
+			circle:TweenPosition(UDim2.new(0, 3, 0.5, -6), "Out", "Quad", 0.12, true)
+		end
+	end
+	toggleSetters[key] = setVisual
+
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, 0, 1, 0)
+	btn.BackgroundTransparency = 1
+	btn.Text = ""
+	btn.Parent = row
+
+	btn.MouseButton1Click:Connect(function()
+		local newState = not S[key]
+		applyKey(key, newState)
+		setVisual(newState)
+	end)
+end
+
+section("QUICK")
+local maxBtn = makeButton(content, {
+	Text = "MAX BOOST",
+	Size = UDim2.new(1, 0, 0, 32),
+	BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+	BackgroundTransparency = 0,
+})
+maxBtn.MouseButton1Click:Connect(function()
+	maxBoost()
+	maxBtn.Text = "Applied"
+	task.delay(0.8, function()
+		if maxBtn and maxBtn.Parent then maxBtn.Text = "MAX BOOST" end
+	end)
+end)
+
+local resetBtn = makeButton(content, {
+	Text = "RESET ALL",
+	Size = UDim2.new(1, 0, 0, 32),
+	BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+	BackgroundTransparency = 0,
+})
+resetBtn.MouseButton1Click:Connect(function()
+	resetAll()
+	resetBtn.Text = "Reset Done"
+	task.delay(0.8, function()
+		if resetBtn and resetBtn.Parent then resetBtn.Text = "RESET ALL" end
+	end)
+end)
+
+section("GRAPHICS")
+makeToggle("Low Quality Mode", "LowQuality")
+makeToggle("Disable Shadows", "NoShadows")
+makeToggle("Disable Post FX", "NoPostFX")
+makeToggle("Fullbright + No Fog", "Fullbright")
+makeToggle("Remove Textures", "NoTextures")
+makeToggle("Disable Terrain Decoration", "NoTerrainDeco")
+makeToggle("Disable Water Effects", "DisableWater")
+
+section("PERFORMANCE")
+makeToggle("Disable Particles / Trails", "NoParticles")
+makeToggle("Optimize Mesh Detail", "OptimizeMesh")
+makeToggle("Garbage Collect Boost", "GCBoost")
+makeToggle("Unlock FPS", "UnlockFPS")
+
+section("FPS CAP (0 = unlimited)")
+local fpsRow = Instance.new("Frame")
+fpsRow.Size = UDim2.new(1, 0, 0, 48)
+fpsRow.BackgroundColor3 = THEME.Panel
+fpsRow.BorderSizePixel = 0
+fpsRow.Parent = content
+corner(fpsRow, UDim.new(0, 8))
+stroke(fpsRow).Transparency = 0.35
+
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Size = UDim2.new(1, -16, 0, 16)
+fpsLabel.Position = UDim2.new(0, 8, 0, 4)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.Text = "Target FPS: Unlimited"
+fpsLabel.Font = Enum.Font.GothamBold
+fpsLabel.TextSize = 11
+fpsLabel.TextColor3 = THEME.TextMuted
+fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+fpsLabel.Parent = fpsRow
+
+local fpsBox = Instance.new("TextBox")
+fpsBox.Size = UDim2.new(1, -16, 0, 20)
+fpsBox.Position = UDim2.new(0, 8, 0, 24)
+fpsBox.BackgroundColor3 = THEME.ButtonIdle
+fpsBox.BorderSizePixel = 0
+fpsBox.Text = "0"
+fpsBox.PlaceholderText = "0 / 60 / 120 / 240"
+fpsBox.Font = Enum.Font.Gotham
+fpsBox.TextSize = 12
+fpsBox.TextColor3 = THEME.TextPrimary
+fpsBox.ClearTextOnFocus = false
+fpsBox.Parent = fpsRow
+corner(fpsBox, UDim.new(0, 6))
+
+fpsBox.FocusLost:Connect(function()
+	local n = tonumber(fpsBox.Text) or 0
+	if n < 0 then n = 0 end
+	S.TargetFPS = math.floor(n)
+	fpsLabel.Text = S.TargetFPS == 0 and "Target FPS: Unlimited" or ("Target FPS: " .. S.TargetFPS)
+	if S.UnlockFPS then setUnlockFPS(true) end
+end)
+
+local pad = Instance.new("Frame")
+pad.Size = UDim2.new(1, 0, 0, 6)
+pad.BackgroundTransparency = 1
+pad.Parent = content
+
+--------------------------------------------------------------------------------
+-- WINDOW
+--------------------------------------------------------------------------------
+closeBtn.MouseButton1Click:Connect(function()
+	resetAll()
+	gui:Destroy()
+end)
+
+local minimized, expandedSize = false, OPEN_SIZE
+minBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	if minimized then
+		expandedSize = frame.Size
+		content.Visible = false
+		divider.Visible = false
+		tween(frame, { Size = UDim2.new(0, expandedSize.X.Offset, 0, COLLAPSED_HEIGHT) })
+		minBtn.Text = "+"
+	else
+		tween(frame, { Size = expandedSize })
+		task.delay(0.22, function()
+			content.Visible = true
+			divider.Visible = true
+		end)
+		minBtn.Text = "–"
+	end
+end)
+
+local dragging, dragStart, startPos
+titleBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local d = input.Position - dragStart
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
