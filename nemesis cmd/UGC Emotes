@@ -1,0 +1,773 @@
+-- NEMESIS EMOTES ENGINE (Favourites + Keybinds + Persistent Config + Minimize + Single Play Button)
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local TargetGui = (typeof(gethui) == "function" and gethui()) or (pcall(function() return CoreGui end) and CoreGui) or PlayerGui
+
+local existing = TargetGui:FindFirstChild("NemesisEmotesGui")
+if existing then existing:Destroy() end
+
+local JSON_URL = "https://raw.githubusercontent.com/7yd7/sniper-Emote/refs/heads/test/EmoteSniper.json"
+local CONFIG_FILE = "NemesisEmotes_Config.json"
+local PAGE_SIZE = 25
+
+local THEME = {
+	Background   = Color3.fromRGB(15, 15, 15),
+	Panel        = Color3.fromRGB(25, 25, 25),
+	Accent       = Color3.fromRGB(255, 255, 255),
+	Stroke       = Color3.fromRGB(80, 80, 80),
+	TextPrimary  = Color3.fromRGB(255, 255, 255),
+	TextMuted    = Color3.fromRGB(200, 200, 200),
+	ButtonIdle   = Color3.fromRGB(30, 30, 30),
+	ButtonHover  = Color3.fromRGB(50, 50, 50),
+	Yellow       = Color3.fromRGB(255, 215, 0),
+}
+
+local OPEN_SIZE = UDim2.new(0, 340, 0, 450)
+local MIN_SIZE_Y = 42
+local TWEEN_INFO = TweenInfo.new(0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+local HOVER_TWEEN = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local DEFAULTS = {
+	{ id = 507770239, name = "Wave", animId = 507770239 },
+	{ id = 507770453, name = "Point", animId = 507770453 },
+	{ id = 507770818, name = "Laugh", animId = 507770818 },
+	{ id = 507770677, name = "Cheer", animId = 507770677 },
+	{ id = 507771019, name = "Dance", animId = 507771019 },
+	{ id = 507776043, name = "Dance2", animId = 507776043 },
+	{ id = 507777268, name = "Dance3", animId = 507777268 },
+}
+
+local currentTrack = nil
+local playingKey = nil
+local rowButtons = {}
+local animCache = {}
+local activePage = "All"
+local isMinimized = false
+local customEmotesList = {}
+
+--------------------------------------------------------------------------------
+-- PERSISTENT CONFIG DATA (SAVE / LOAD)
+--------------------------------------------------------------------------------
+local userConfig = {
+	Favourites = {},
+	Keybinds = {}
+}
+
+local function loadUserConfig()
+	if readfile and isfile and isfile(CONFIG_FILE) then
+		local ok, result = pcall(function()
+			return HttpService:JSONDecode(readfile(CONFIG_FILE))
+		end)
+		if ok and type(result) == "table" then
+			userConfig.Favourites = result.Favourites or {}
+			userConfig.Keybinds = result.Keybinds or {}
+		end
+	end
+end
+
+local function saveUserConfig()
+	if writefile then
+		pcall(function()
+			writefile(CONFIG_FILE, HttpService:JSONEncode(userConfig))
+		end)
+	end
+end
+
+loadUserConfig()
+
+--------------------------------------------------------------------------------
+-- UI HELPER FUNCTIONS
+--------------------------------------------------------------------------------
+local function tween(i, p, info)
+	local t = TweenService:Create(i, info or TWEEN_INFO, p)
+	t:Play()
+	return t
+end
+
+local function corner(p, r)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = r or UDim.new(0, 12)
+	c.Parent = p
+end
+
+local function stroke(p, col, th)
+	local s = Instance.new("UIStroke")
+	s.Color = col or THEME.Stroke
+	s.Thickness = th or 1
+	s.Parent = p
+	return s
+end
+
+local function makeButton(parent, props)
+	local btn = Instance.new("TextButton")
+	btn.Size = props.Size or UDim2.new(1, 0, 0, 28)
+	btn.BackgroundColor3 = props.BackgroundColor3 or THEME.ButtonIdle
+	btn.BackgroundTransparency = props.BackgroundTransparency or 0.25
+	btn.AutoButtonColor = false
+	btn.Text = props.Text or ""
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = props.TextSize or 12
+	btn.TextColor3 = props.TextColor3 or THEME.TextPrimary
+	btn.Parent = parent
+	corner(btn, UDim.new(0, 8))
+	local st = stroke(btn)
+	st.Transparency = 0.3
+	btn.MouseEnter:Connect(function()
+		tween(btn, { BackgroundColor3 = props.HoverColor or THEME.ButtonHover, BackgroundTransparency = 0.1 }, HOVER_TWEEN)
+		tween(st, { Color = THEME.Accent, Transparency = 0 }, HOVER_TWEEN)
+	end)
+	btn.MouseLeave:Connect(function()
+		tween(btn, {
+			BackgroundColor3 = props.BackgroundColor3 or THEME.ButtonIdle,
+			BackgroundTransparency = props.BackgroundTransparency or 0.25
+		}, HOVER_TWEEN)
+		tween(st, { Color = THEME.Stroke, Transparency = 0.3 }, HOVER_TWEEN)
+	end)
+	return btn
+end
+
+local function httpGet(url)
+	local req = (syn and syn.request) or (http and http.request) or http_request or request
+	if req then
+		local ok, res = pcall(function() return req({ Url = url, Method = "GET" }) end)
+		if ok and res then
+			local body = res.Body or res.body
+			if type(body) == "string" and #body > 0 then return body end
+		end
+	end
+	local ok2, body2 = pcall(function() return game:HttpGet(url) end)
+	return ok2 and body2 or nil
+end
+
+--------------------------------------------------------------------------------
+-- EMOTE PLAYBACK LOGIC
+--------------------------------------------------------------------------------
+local statusLabelRef = nil
+
+local function stopEmote()
+	currentTrack = nil
+	playingKey = nil
+	local char = LocalPlayer.Character
+	if char then
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then
+			pcall(function() hum:UnequipTools() end)
+		end
+	end
+	if statusLabelRef then statusLabelRef.Text = "Stopped" end
+end
+
+local function tryPlayTrack(animId)
+	local char = LocalPlayer.Character
+	if not char then return nil end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return nil end
+
+	local animator = hum:FindFirstChildOfClass("Animator") or Instance.new("Animator", hum)
+	local animObj = Instance.new("Animation")
+	animObj.AnimationId = "rbxassetid://" .. tostring(animId)
+
+	local loadedTrack = nil
+	local ok = pcall(function() loadedTrack = animator:LoadAnimation(animObj) end)
+	if not ok or not loadedTrack then
+		pcall(function() loadedTrack = hum:LoadAnimation(animObj) end)
+	end
+
+	if loadedTrack then
+		loadedTrack.Priority = Enum.AnimationPriority.Action4
+		loadedTrack.Looped = true
+		local played = pcall(function() loadedTrack:Play(0.1, 1, 1) end)
+		if played then
+			task.wait(0.05)
+			if loadedTrack.IsPlaying or loadedTrack.Length > 0 then
+				return loadedTrack
+			end
+		end
+		pcall(function() loadedTrack:Stop() loadedTrack:Destroy() end)
+	end
+
+	return nil
+end
+
+local function resolveAnimationIds(assetId)
+	local strId = tostring(assetId)
+	local cleaned = (strId:gsub("%D", ""))
+	assetId = tonumber(cleaned)
+	if not assetId then return {} end
+	if animCache[assetId] then return animCache[assetId] end
+
+	local candidates = {}
+	local getObjects = rawget(getfenv(), "getobjects") or game.GetObjects
+	if getObjects then
+		pcall(function()
+			local objs = getObjects("rbxassetid://" .. tostring(assetId))
+			if type(objs) == "table" then
+				for _, obj in ipairs(objs) do
+					if obj:IsA("Animation") and obj.AnimationId ~= "" then
+						local num = obj.AnimationId:match("%d+")
+						if num then table.insert(candidates, tonumber(num)) end
+					end
+					for _, desc in ipairs(obj:GetDescendants()) do
+						if desc:IsA("Animation") and desc.AnimationId ~= "" then
+							local num = desc.AnimationId:match("%d+")
+							if num then table.insert(candidates, tonumber(num)) end
+						end
+					end
+					pcall(function() obj:Destroy() end)
+				end
+			end
+		end)
+	end
+
+	if #candidates == 0 then
+		pcall(function()
+			local url = "https://assetdelivery.roblox.com/v1/asset/?id=" .. tostring(assetId)
+			local body = httpGet(url)
+			if body then
+				for num in string.gmatch(body, "rbxassetid://(%d+)") do
+					table.insert(candidates, tonumber(num))
+				end
+				for num in string.gmatch(body, "id=(%d+)") do
+					table.insert(candidates, tonumber(num))
+				end
+			end
+		end)
+	end
+
+	table.insert(candidates, assetId)
+
+	local unique, hash = {}, {}
+	for _, id in ipairs(candidates) do
+		if id and not hash[id] then
+			hash[id] = true
+			table.insert(unique, id)
+		end
+	end
+
+	animCache[assetId] = unique
+	return unique
+end
+
+local function playEmote(emote)
+	stopEmote()
+	local char = LocalPlayer.Character
+	if not char then return false, "No Character" end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return false, "No Humanoid" end
+
+	local rawId = emote.animId or emote.id
+	if not rawId then return false, "Invalid ID" end
+	local emoteName = emote.name or "Emote"
+	local numId = tonumber((tostring(rawId):gsub("%D", "")))
+
+	if numId then
+		local okDesc = pcall(function()
+			local desc = hum:FindFirstChildOfClass("HumanoidDescription") or hum:GetAppliedDescription()
+			if desc then
+				local currentEmotes = desc:GetEmotes()
+				currentEmotes[emoteName] = { numId }
+				desc:SetEmotes(currentEmotes)
+				return hum:PlayEmote(emoteName)
+			end
+		end)
+		if okDesc then return true end
+	end
+
+	if emoteName then
+		local okBuiltin = pcall(function() return hum:PlayEmote(emoteName) end)
+		if okBuiltin then return true end
+		
+		if numId then
+			local okBuiltinId = pcall(function() return hum:PlayEmote(emoteName, numId) end)
+			if okBuiltinId then return true end
+		end
+	end
+
+	local animateScript = char:FindFirstChild("Animate")
+	if animateScript then
+		local playEmoteEvent = animateScript:FindFirstChild("PlayEmote")
+		if playEmoteEvent and playEmoteEvent:IsA("BindableEvent") then
+			local okEvent = pcall(function()
+				playEmoteEvent:Fire(emoteName, numId or rawId)
+			end)
+			if okEvent then
+				task.wait(0.1)
+				if hum:GetState() == Enum.HumanoidStateType.PerformingEmote then
+					return true
+				end
+			end
+		end
+	end
+
+	local resolvedIds = resolveAnimationIds(rawId)
+	for _, animId in ipairs(resolvedIds) do
+		local track = tryPlayTrack(animId)
+		if track then
+			currentTrack = track
+			return true
+		end
+	end
+
+	return false, "Emote restricted by game permissions"
+end
+
+--------------------------------------------------------------------------------
+-- UI SETUP
+--------------------------------------------------------------------------------
+local gui = Instance.new("ScreenGui")
+gui.Name = "NemesisEmotesGui"
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 999999
+gui.Parent = TargetGui
+
+local frame = Instance.new("Frame")
+frame.Size = OPEN_SIZE
+frame.Position = UDim2.new(0.5, -170, 0.5, -225)
+frame.BackgroundColor3 = THEME.Background
+frame.BackgroundTransparency = 0.15
+frame.BorderSizePixel = 0
+frame.ClipsDescendants = true
+frame.Parent = gui
+corner(frame, UDim.new(0, 16))
+stroke(frame, THEME.Stroke, 1.2)
+
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 42)
+titleBar.BackgroundTransparency = 1
+titleBar.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0, 160, 0, 22)
+title.Position = UDim2.new(0, 14, 0.5, -11)
+title.BackgroundTransparency = 1
+title.Text = "NEMESIS Emotes"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.TextColor3 = THEME.TextPrimary
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = titleBar
+
+local closeBtn = makeButton(titleBar, { Text = "×", Size = UDim2.new(0, 24, 0, 24) })
+closeBtn.Position = UDim2.new(1, -30, 0, 9)
+
+local minBtn = makeButton(titleBar, { Text = "-", Size = UDim2.new(0, 24, 0, 24) })
+minBtn.Position = UDim2.new(1, -60, 0, 9)
+
+-- Tab Navigation Header
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(1, -24, 0, 28)
+tabFrame.Position = UDim2.new(0, 12, 0, 42)
+tabFrame.BackgroundTransparency = 1
+tabFrame.Parent = frame
+
+local tabLayout = Instance.new("UIListLayout")
+tabLayout.FillDirection = Enum.FillDirection.Horizontal
+tabLayout.Padding = UDim.new(0, 6)
+tabLayout.Parent = tabFrame
+
+local tabs = {}
+local tabNames = { "All", "Favourites", "Keys" }
+
+local searchBox = Instance.new("TextBox")
+searchBox.Size = UDim2.new(1, -90, 0, 30)
+searchBox.Position = UDim2.new(0, 12, 0, 76)
+searchBox.BackgroundColor3 = THEME.Panel
+searchBox.PlaceholderText = "Search emotes..."
+searchBox.Text = ""
+searchBox.Font = Enum.Font.Gotham
+searchBox.TextSize = 12
+searchBox.TextColor3 = THEME.TextPrimary
+searchBox.PlaceholderColor3 = THEME.TextMuted
+searchBox.Parent = frame
+corner(searchBox, UDim.new(0, 8))
+
+local searchBtn = makeButton(frame, { Text = "Search", Size = UDim2.new(0, 70, 0, 30) })
+searchBtn.Position = UDim2.new(1, -82, 0, 76)
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -24, 0, 16)
+statusLabel.Position = UDim2.new(0, 12, 0, 110)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Ready"
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextSize = 11
+statusLabel.TextColor3 = THEME.TextMuted
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.Parent = frame
+statusLabelRef = statusLabel
+
+local listFrame = Instance.new("ScrollingFrame")
+listFrame.Size = UDim2.new(1, -24, 1, -136)
+listFrame.Position = UDim2.new(0, 12, 0, 128)
+listFrame.BackgroundTransparency = 1
+listFrame.ScrollBarThickness = 3
+listFrame.ScrollBarImageColor3 = THEME.Accent
+listFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+listFrame.Parent = frame
+
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0, 5)
+listLayout.Parent = listFrame
+
+-- Window Dragging Handler
+local dragging, dragStart, startPos = false, nil, nil
+titleBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+
+		local conn
+		conn = input:GetPropertyChangedSignal("UserInputState"):Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+				if conn then conn:Disconnect() end
+			end
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+--------------------------------------------------------------------------------
+-- CATALOG FETCHING & UI BINDINGS
+--------------------------------------------------------------------------------
+local emotes, seenIds = {}, {}
+local isLoading, noMore = false, false
+local currentKeyword = ""
+local loadedCustom = false
+local currentFiltered = {}
+local currentIndex = 1
+local listeningKeyForEmote = nil
+
+local function parseEmoteJSON(body)
+	local ok, data = pcall(function() return HttpService:JSONDecode(body) end)
+	if not ok or type(data) ~= "table" then return {} end
+
+	local list = {}
+	local targetContainer = data.emotes or data.data or data.Emotes or data
+
+	for k, v in pairs(targetContainer) do
+		if type(v) == "table" then
+			local rawId = v.id or v.assetId or v.animId or v.AnimationId or v.EmoteId or v.asset_id
+			local cleanIdStr = rawId and (tostring(rawId):gsub("%D", "")) or nil
+			local id = cleanIdStr and tonumber(cleanIdStr)
+			local name = v.name or v.Name or v.title or v.title_name or tostring(k)
+			local rawAnimId = v.animId or v.animationId or v.AnimId or id
+			local cleanAnimStr = rawAnimId and (tostring(rawAnimId):gsub("%D", "")) or nil
+			local animId = cleanAnimStr and tonumber(cleanAnimStr) or id
+
+			if id then
+				table.insert(list, { id = id, name = tostring(name), animId = animId })
+			end
+		elseif type(v) == "number" or type(v) == "string" then
+			local cleanStr = (tostring(v):gsub("%D", ""))
+			local num = tonumber(cleanStr)
+			if num then table.insert(list, { id = num, name = tostring(k), animId = num }) end
+		end
+	end
+	return list
+end
+
+local function addRow(emote)
+	if rowButtons[emote.id] then return end
+
+	local strId = tostring(emote.id)
+	local row = Instance.new("Frame")
+	row.Size = UDim2.new(1, 0, 0, 36)
+	row.BackgroundColor3 = THEME.Panel
+	row.Parent = listFrame
+	corner(row, UDim.new(0, 8))
+
+	local isFav = userConfig.Favourites[strId] == true
+	local favBtn = Instance.new("TextButton")
+	favBtn.Size = UDim2.new(0, 24, 0, 24)
+	favBtn.Position = UDim2.new(0, 6, 0.5, -12)
+	favBtn.BackgroundTransparency = 1
+	favBtn.Text = isFav and "★" or "☆"
+	favBtn.Font = Enum.Font.GothamBold
+	favBtn.TextSize = 16
+	favBtn.TextColor3 = isFav and THEME.Yellow or THEME.TextMuted
+	favBtn.Parent = row
+
+	local nameLbl = Instance.new("TextLabel")
+	nameLbl.Size = UDim2.new(1, -145, 1, 0)
+	nameLbl.Position = UDim2.new(0, 34, 0, 0)
+	nameLbl.BackgroundTransparency = 1
+	nameLbl.Text = emote.name
+	nameLbl.Font = Enum.Font.GothamBold
+	nameLbl.TextSize = 12
+	nameLbl.TextColor3 = THEME.TextPrimary
+	nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+	nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+	nameLbl.Parent = row
+
+	local keyName = userConfig.Keybinds[strId] or "None"
+	local keyBtn = makeButton(row, { Text = keyName, Size = UDim2.new(0, 48, 0, 24), TextSize = 10 })
+	keyBtn.Position = UDim2.new(1, -104, 0.5, -12)
+
+	local playBtn = makeButton(row, { Text = "Play", Size = UDim2.new(0, 48, 0, 24), TextSize = 11 })
+	playBtn.Position = UDim2.new(1, -52, 0.5, -12)
+
+	rowButtons[emote.id] = { Row = row, Key = keyBtn, Fav = favBtn, Emote = emote }
+
+	favBtn.MouseButton1Click:Connect(function()
+		local newState = not (userConfig.Favourites[strId] == true)
+		if newState then
+			userConfig.Favourites[strId] = true
+			favBtn.Text = "★"
+			favBtn.TextColor3 = THEME.Yellow
+		else
+			userConfig.Favourites[strId] = nil
+			favBtn.Text = "☆"
+			favBtn.TextColor3 = THEME.TextMuted
+			if activePage == "Favourites" then
+				row:Destroy()
+				rowButtons[emote.id] = nil
+			end
+		end
+		saveUserConfig()
+	end)
+
+	local function startKeyListening()
+		listeningKeyForEmote = emote
+		keyBtn.Text = "..."
+		statusLabel.Text = "Press any key to bind (or click off / ESC to set None)"
+
+		local inputConn
+		local focusConn
+
+		local function cleanup()
+			if inputConn then inputConn:Disconnect() end
+			if focusConn then focusConn:Disconnect() end
+			listeningKeyForEmote = nil
+		end
+
+		inputConn = UserInputService.InputBegan:Connect(function(input, gpe)
+			if gpe then return end
+			if input.UserInputType == Enum.UserInputType.Keyboard then
+				local k = input.KeyCode
+				if k == Enum.KeyCode.Escape or k == Enum.KeyCode.Backspace then
+					userConfig.Keybinds[strId] = nil
+					keyBtn.Text = "None"
+					statusLabel.Text = "Key cleared for " .. emote.name
+				else
+					userConfig.Keybinds[strId] = k.Name
+					keyBtn.Text = k.Name
+					statusLabel.Text = "Bound " .. emote.name .. " to [" .. k.Name .. "]"
+				end
+				saveUserConfig()
+				cleanup()
+			end
+		end)
+
+		focusConn = UserInputService.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				task.wait(0.05)
+				if listeningKeyForEmote == emote then
+					userConfig.Keybinds[strId] = nil
+					keyBtn.Text = "None"
+					statusLabel.Text = "Key set to None for " .. emote.name
+					saveUserConfig()
+					cleanup()
+				end
+			end
+		end)
+	end
+
+	keyBtn.MouseButton1Click:Connect(function()
+		startKeyListening()
+	end)
+
+	playBtn.MouseButton1Click:Connect(function()
+		statusLabel.Text = "Playing " .. emote.name .. "..."
+		playBtn.Text = "..."
+
+		task.spawn(function()
+			local success, ok = pcall(function()
+				return playEmote(emote)
+			end)
+			playBtn.Text = "Play"
+			if success and ok == true then
+				playingKey = emote.id
+				statusLabel.Text = "Playing: " .. emote.name
+			else
+				statusLabel.Text = "Failed to play emote"
+			end
+		end)
+	end)
+end
+
+local function updateFilteredList()
+	currentFiltered = {}
+	local filterKw = string.lower(currentKeyword)
+	for _, e in ipairs(customEmotesList) do
+		local strId = tostring(e.id)
+		local passesSearch = (filterKw == "" or string.find(string.lower(e.name), filterKw, 1, true))
+		
+		local passesPage = true
+		if activePage == "Favourites" then
+			passesPage = (userConfig.Favourites[strId] == true)
+		elseif activePage == "Keys" then
+			passesPage = (userConfig.Keybinds[strId] ~= nil and userConfig.Keybinds[strId] ~= "None")
+		end
+
+		if passesSearch and passesPage then
+			table.insert(currentFiltered, e)
+		end
+	end
+end
+
+local function loadMore()
+	if isLoading or noMore then return end
+	isLoading = true
+
+	task.spawn(function()
+		if not loadedCustom then
+			statusLabel.Text = "Fetching Emotes catalog..."
+			local body = httpGet(JSON_URL)
+			if body then customEmotesList = parseEmoteJSON(body) end
+
+			if #customEmotesList == 0 then
+				statusLabel.Text = "JSON empty, using defaults"
+				for _, d in ipairs(DEFAULTS) do table.insert(customEmotesList, d) end
+			end
+
+			loadedCustom = true
+			updateFilteredList()
+		end
+
+		local endIndex = math.min(currentIndex + PAGE_SIZE - 1, #currentFiltered)
+		if currentIndex <= #currentFiltered then
+			for i = currentIndex, endIndex do
+				local e = currentFiltered[i]
+				if e and e.id and not seenIds[e.id] then
+					seenIds[e.id] = true
+					table.insert(emotes, e)
+					addRow(e)
+				end
+			end
+			currentIndex = endIndex + 1
+		end
+
+		if currentIndex > #currentFiltered then noMore = true end
+		statusLabel.Text = #emotes .. " / " .. #currentFiltered .. " emotes loaded (" .. activePage .. ")"
+		isLoading = false
+	end)
+end
+
+local function resetAndSearch(kw)
+	currentKeyword = kw or ""
+	emotes = {}
+	seenIds = {}
+	rowButtons = {}
+	currentIndex = 1
+	noMore = false
+	stopEmote()
+	for _, c in ipairs(listFrame:GetChildren()) do
+		if c:IsA("Frame") then c:Destroy() end
+	end
+	updateFilteredList()
+	loadMore()
+end
+
+-- Create Page Navigation Tabs
+for _, name in ipairs(tabNames) do
+	local tabBtn = makeButton(tabFrame, { Text = name, Size = UDim2.new(0, 96, 1, 0), TextSize = 11 })
+	tabs[name] = tabBtn
+	tabBtn.MouseButton1Click:Connect(function()
+		activePage = name
+		for tName, btn in pairs(tabs) do
+			btn.BackgroundColor3 = (tName == activePage) and THEME.ButtonHover or THEME.ButtonIdle
+		end
+		resetAndSearch(searchBox.Text)
+	end)
+end
+tabs["All"].BackgroundColor3 = THEME.ButtonHover
+
+-- Minimize Button Toggle Logic
+minBtn.MouseButton1Click:Connect(function()
+	isMinimized = not isMinimized
+	if isMinimized then
+		minBtn.Text = "+"
+		tabFrame.Visible = false
+		searchBox.Visible = false
+		searchBtn.Visible = false
+		statusLabel.Visible = false
+		listFrame.Visible = false
+		tween(frame, { Size = UDim2.new(OPEN_SIZE.X.Scale, OPEN_SIZE.X.Offset, 0, MIN_SIZE_Y) })
+	else
+		minBtn.Text = "-"
+		tabFrame.Visible = true
+		searchBox.Visible = true
+		searchBtn.Visible = true
+		statusLabel.Visible = true
+		listFrame.Visible = true
+		tween(frame, { Size = OPEN_SIZE })
+	end
+end)
+
+-- Global Keybind Input Handler
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe or listeningKeyForEmote then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard then
+		local keyName = input.KeyCode.Name
+		for strId, boundKey in pairs(userConfig.Keybinds) do
+			if boundKey == keyName then
+				local numId = tonumber(strId)
+				local targetEmote = nil
+				
+				for _, e in ipairs(customEmotesList) do
+					if e.id == numId then
+						targetEmote = e
+						break
+					end
+				end
+				if not targetEmote then
+					for _, d in ipairs(DEFAULTS) do
+						if d.id == numId then
+							targetEmote = d
+							break
+						end
+					end
+				end
+
+				if targetEmote then
+					task.spawn(function()
+						playEmote(targetEmote)
+					end)
+					playingKey = targetEmote.id
+				end
+				break
+			end
+		end
+	end
+end)
+
+listFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+	if listFrame.CanvasPosition.Y + listFrame.AbsoluteWindowSize.Y >= listFrame.AbsoluteCanvasSize.Y - 80 then
+		loadMore()
+	end
+end)
+
+searchBtn.MouseButton1Click:Connect(function() resetAndSearch(searchBox.Text) end)
+searchBox.FocusLost:Connect(function(enter) if enter then resetAndSearch(searchBox.Text) end end)
+closeBtn.MouseButton1Click:Connect(function() stopEmote() gui:Destroy() end)
+
+loadMore()
