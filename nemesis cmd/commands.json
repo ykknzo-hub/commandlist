@@ -1,6 +1,7 @@
 {
   "AntiVCBan": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/cmdsnem/refs/heads/main/ANTIVCB.luau\"))()",
   "NoClip": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/cmdsnem/refs/heads/main/noclip.luau\"))()",
+  "Reanimation": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/reanim\"))()",
   "FriendTag": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/cmdsnem/refs/heads/main/friendstag.luau\"))()",
   "Shaders": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/cmdsnem/refs/heads/main/shaders.luau\"))()",
   "FpsBooster": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/commandlist/refs/heads/main/nemesis%20cmd/Fpsbooster\"))()",
@@ -29,6 +30,7 @@
     "vc": "AntiVCBan",
     "esp": "Esp",
     "uge": "UgcEmotes",
+    "reanim": "Reanimation",
     "fps": "FpsBooster",
     "invis": "Invisisble",
     "ftag": "FriendTag",
