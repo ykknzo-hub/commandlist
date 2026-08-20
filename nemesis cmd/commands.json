@@ -24,7 +24,7 @@
   "Sliders": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/cmdsnem/refs/heads/main/sliders.luau\"))()",
   "Position Saver": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/cmdsnem/refs/heads/main/pos%20saver.luau\"))()",
   "Rejoin": "loadstring(game:HttpGet(\"https://pastebin.com/raw/5kcf62qz\"))()",
-  "Baseplate Expander": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/cmdsnem/refs/heads/main/baseplate.luau\"))()",
+  "Baseplate Expander": "loadstring(game:HttpGet(\"https://pastebin.com/raw/BgfhaUVF\"))()",
   "Hide Players": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ykknzo-hub/cmdsnem/refs/heads/main/hideplayers.luau\"))()",
   "Infinite Yield": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source\"))()",
   "_chat_commands": {
